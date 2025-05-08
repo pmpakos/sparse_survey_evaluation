@@ -1,8 +1,8 @@
 
 EXE  = 
 # EXE += mat_read.exe 
-# EXE += mat_cusparse_spmv.exe mat_cusparse_spmm.exe mat_cusparse_sddmm.exe 
-EXE += mat_cusparse_spmm.exe
+# EXE += mat_cusparse_spmv.exe spmm_cusparse.exe mat_cusparse_sddmm.exe 
+EXE += spmm_cusparse.exe sddmm_cusparse.exe 
 # EXE += mat_dgsparse_spmm.exe mat_dgsparse_sddmm.exe 
 # EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
 # EXE += mat_acc_spmm.exe
@@ -209,16 +209,12 @@ mat_read.exe: mat_read.cpp $(LIB_OBJ)
 
 ########## GPU ##########
 
-mat_cusparse_spmm.exe: obj/spmm_bench.o mat_cusparse_spmm.cu $(LIB_OBJ)
-	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
-
-
 # mat_cusparse_spmv.exe: mat_cusparse_spmv.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
-# mat_cusparse_spmm.exe: mat_cusparse_spmm.cpp $(LIB_OBJ)
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
-# mat_cusparse_sddmm.exe: mat_cusparse_sddmm.cpp $(LIB_OBJ)
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
+spmm_cusparse.exe: obj/spmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
+sddmm_cusparse.exe: obj/sddmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
 
 # # mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
 # # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
@@ -319,6 +315,8 @@ mat_cusparse_spmm.exe: obj/spmm_bench.o mat_cusparse_spmm.cu $(LIB_OBJ)
 # #########################
 
 $(call Rule_Auto_Dependencies,obj/spmm_bench.o,spmm_bench.cpp,$(CFLAGS))
+	$(CPP) $(CFLAGS) -c $< -o $@
+$(call Rule_Auto_Dependencies,obj/sddmm_bench.o,sddmm_bench.cpp,$(CFLAGS))
 	$(CPP) $(CFLAGS) -c $< -o $@
 
 # $(call Rule_Auto_Dependencies,obj/read_mtx.o,read_mtx.cpp,$(CFLAGS))

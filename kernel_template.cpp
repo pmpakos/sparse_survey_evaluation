@@ -4,8 +4,8 @@
 
 #include "macros/cpp_defines.h"
 
-#include "spmm_bench_common.h"
-#include "spmm_kernel.h"
+#include "bench_common.h"
+#include "kernel.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -47,12 +47,19 @@ struct New_Array : Matrix_Format
 	}
 
 	void spmm(ValueType * x, ValueType * y, int k);
+	void sddmm(ValueType * x, ValueType * y, ValueType * out, int k) = 0;
 };
 
 void
 New_Array::spmm(ValueType * x, ValueType * y, int k)
 {
-	
+
+}
+
+void
+New_Array::sddmm(ValueType * x, ValueType * y, ValueType * out, int k)
+{
+
 }
 
 struct Matrix_Format *

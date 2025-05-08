@@ -1,9 +1,9 @@
-#ifndef SPMM_KERNELS_H
-#define SPMM_KERNELS_H
+#ifndef KERNELS_H
+#define KERNELS_H
 
 #include "macros/cpp_defines.h"
 
-#include "spmm_bench_common.h"
+#include "bench_common.h"
 
 struct Matrix_Format
 {
@@ -15,6 +15,7 @@ struct Matrix_Format
 	double csr_mem_footprint;
 
 	virtual void spmm(ValueType * x, ValueType * y, int k) = 0;
+	virtual void sddmm(ValueType * x, ValueType * y, ValueType * out, int k) = 0;
 
 	Matrix_Format(long m, long n, long nnz) : m(m), n(n), nnz(nnz)
 	{
@@ -24,4 +25,4 @@ struct Matrix_Format
 
 struct Matrix_Format * csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long n, long nnz);
 
-#endif /* SPMM_KERNELS_H */
+#endif /* KERNELS_H */

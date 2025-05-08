@@ -91,7 +91,8 @@ do
     echo '--------'
     echo ${path_validation}/$a
     # ./mat_read.exe ${path_validation}/$a
-    ./mat_cusparse_spmm.exe ${path_validation}/$a 128
+    ./spmm_cusparse.exe ${path_validation}/$a 128
+    ./sddmm_cusparse.exe ${path_validation}/$a 128
     # ./mat_gnnpilot_spmm.exe ${path_validation}/$a 128 1
     # ./mat_gnnpilot_spmm.exe ${path_validation}/$a 128 2
     # ./mat_gnnpilot_sddmm.exe ${path_validation}/$a 128 1

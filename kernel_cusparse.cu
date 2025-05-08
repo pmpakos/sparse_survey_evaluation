@@ -7,8 +7,8 @@
 
 #include "macros/cpp_defines.h"
 
-#include "spmm_bench_common.h"
-#include "spmm_kernel.h"
+#include "bench_common.h"
+#include "kernel.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -56,10 +56,12 @@ struct CSRArrays : Matrix_Format
 
 	ValueType * x = NULL;
 	ValueType * y = NULL;
+	ValueType * out = NULL;
 	ValueType * x_d = NULL;
 	ValueType * y_d = NULL;
 	ValueType * x_h = NULL;
 	ValueType * y_h = NULL;
+	ValueType * out_h = NULL;
 	cusparseDnMatDescr_t matX;
 	cusparseDnMatDescr_t matY;
 
@@ -109,6 +111,7 @@ struct CSRArrays : Matrix_Format
 		gpuCudaErrorCheck(cudaFreeHost(a_h));
 		gpuCudaErrorCheck(cudaFreeHost(x_h));
 		gpuCudaErrorCheck(cudaFreeHost(y_h));
+		gpuCudaErrorCheck(cudaFreeHost(out_h));
 
 		gpuCusparseErrorCheck(cusparseDestroySpMat(matA));
 		gpuCusparseErrorCheck(cusparseDestroyDnMat(matX));
@@ -120,11 +123,11 @@ struct CSRArrays : Matrix_Format
 	}
 
 	void spmm(ValueType * x, ValueType * y, int k);
+	void sddmm(ValueType * x, ValueType * y, ValueType * out, int k);
 };
 
-
-void compute_spmm(CSRArrays * restrict csr, ValueType * restrict x , ValueType * restrict y, int k);
-
+void compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, int k);
+void compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k);
 
 void
 CSRArrays::spmm(ValueType * x, ValueType * y, int k)
@@ -132,6 +135,11 @@ CSRArrays::spmm(ValueType * x, ValueType * y, int k)
 	compute_spmm(this, x, y, k);
 }
 
+void
+CSRArrays::sddmm(ValueType * x, ValueType * y, ValueType * out, int k)
+{
+	compute_sddmm(this, x, y, out, k);
+}
 
 struct Matrix_Format *
 csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long n, long nnz)
@@ -143,7 +151,7 @@ csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long
 }
 
 //==========================================================================================================================================
-//= CSR Custom
+//= Computation
 //==========================================================================================================================================
 
 void
@@ -153,23 +161,22 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 	const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
+		csr->x = x;
+
 		gpuCudaErrorCheck(cudaMalloc((void**)&csr->x_d, csr->n * k * sizeof(*csr->x_d)));
 		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->x_h, csr->n * k * sizeof(*csr->x_h)));
-
-		csr->x = x;
 
 		memcpy(csr->x_h, x, csr->n * k * sizeof(ValueType));
 		gpuCudaErrorCheck(cudaMemcpyAsync(csr->x_d, csr->x_h, csr->n * k * sizeof(*csr->x_d), cudaMemcpyHostToDevice, csr->stream));
 		gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
 
-		// Create dense vector X
+		// Create dense matrix X
 		gpuCusparseErrorCheck(cusparseCreateDnMat(&csr->matX, csr->n, k, k, csr->x_d, ValueTypeCuda, CUSPARSE_ORDER_ROW)); // CUSPARSE_ORDER_COL
 
-		// Also, prepare for the output vector y
+		// Also, prepare for the output matrix y
 		gpuCudaErrorCheck(cudaMalloc((void**)&csr->y_d, csr->m * k * sizeof(*csr->y_d)));
-		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->y_h, csr->m * k * sizeof(*csr->y_h)));
 
-		// Create dense vector y
+		// Create dense matrix Y
 		gpuCusparseErrorCheck(cusparseCreateDnMat(&csr->matY, csr->m, k, k, csr->y_d, ValueTypeCuda, CUSPARSE_ORDER_ROW)); // CUSPARSE_ORDER_COL
 
 		// Allocate an external buffer if needed and finish preprocessing
@@ -188,8 +195,61 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 	{
 		csr->y = y;
 
+		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->y_h, csr->m * k * sizeof(*csr->y_h)));
 		gpuCudaErrorCheck(cudaMemcpyAsync(csr->y_h, csr->y_d, csr->m * k * sizeof(*csr->y_d), cudaMemcpyDeviceToHost, csr->stream));
 		gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
 		memcpy(y, csr->y_h, csr->m * k * sizeof(ValueType));
+	}
+}
+
+void
+compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k)
+{
+	const ValueType alpha = 1.0;
+	const ValueType beta = 0.0;
+	if (csr->x == NULL)
+	{
+		csr->x = x;
+		csr->y = y;
+
+		gpuCudaErrorCheck(cudaMalloc((void**)&csr->x_d, csr->m * k * sizeof(*csr->x_d)));
+		gpuCudaErrorCheck(cudaMalloc((void**)&csr->y_d, k * csr->n * sizeof(*csr->y_d)));
+
+		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->x_h, csr->m * k * sizeof(*csr->x_h)));
+		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->y_h, k * csr->n * sizeof(*csr->y_h)));
+
+		memcpy(csr->x_h, x, csr->m * k * sizeof(ValueType));
+		memcpy(csr->y_h, y, k * csr->n * sizeof(ValueType));
+
+		gpuCudaErrorCheck(cudaMemcpyAsync(csr->x_d, csr->x_h, csr->m * k * sizeof(*csr->x_d), cudaMemcpyHostToDevice, csr->stream));
+		gpuCudaErrorCheck(cudaMemcpyAsync(csr->y_d, csr->y_h, k * csr->n * sizeof(*csr->y_d), cudaMemcpyHostToDevice, csr->stream));
+
+		gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
+
+		// Create dense matrices X and Y
+		gpuCusparseErrorCheck(cusparseCreateDnMat(&csr->matX, csr->m, k, k, csr->x_d, ValueTypeCuda, CUSPARSE_ORDER_ROW)); // CUSPARSE_ORDER_COL
+		gpuCusparseErrorCheck(cusparseCreateDnMat(&csr->matY, k, csr->n, csr->n, csr->y_d, ValueTypeCuda, CUSPARSE_ORDER_ROW)); // CUSPARSE_ORDER_COL
+
+		// Allocate an external buffer if needed and finish preprocessing
+		gpuCusparseErrorCheck(cusparseSDDMM_bufferSize(csr->handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, csr->matX, csr->matY, &beta, csr->matA, ValueTypeCuda, CUSPARSE_SDDMM_ALG_DEFAULT, &csr->bufferSize))
+		gpuCudaErrorCheck(cudaMalloc((void**)&csr->dBuffer, csr->bufferSize));
+
+		gpuCusparseErrorCheck(cusparseSDDMM_preprocess(csr->handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, csr->matX, csr->matY, &beta, csr->matA, ValueTypeCuda, CUSPARSE_SDDMM_ALG_DEFAULT, csr->dBuffer))
+	}
+
+	gpuCusparseErrorCheck(cusparseSDDMM(csr->handle, CUSPARSE_OPERATION_NON_TRANSPOSE, CUSPARSE_OPERATION_NON_TRANSPOSE, &alpha, csr->matX, csr->matY, &beta, csr->matA, ValueTypeCuda, CUSPARSE_SDDMM_ALG_DEFAULT, csr->dBuffer))
+
+	gpuCudaErrorCheck(cudaPeekAtLastError());
+	gpuCudaErrorCheck(cudaDeviceSynchronize());
+
+	if (csr->out == NULL)
+	{
+		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->out_h, csr->nnz * sizeof(*csr->out_h)));
+
+		csr->out = out;
+
+		gpuCudaErrorCheck(cudaMemcpyAsync(csr->out_h, csr->a_d, csr->nnz * sizeof(*csr->a_d), cudaMemcpyDeviceToHost, csr->stream));
+		gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
+		memcpy(out, csr->out_h, csr->nnz * sizeof(ValueType));
 	}
 }

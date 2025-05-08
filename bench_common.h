@@ -1,5 +1,5 @@
-#ifndef SPMM_BENCH_COMMON_H
-#define SPMM_BENCH_COMMON_H
+#ifndef BENCH_COMMON_H
+#define BENCH_COMMON_H
 
 #include <stdint.h>
 #include <math.h>
@@ -28,4 +28,4 @@ coord_to_double(void * A, long i)
 	return (double) ((INT_T *) A)[i];
 }
 
-#endif /* SPMM_BENCH_COMMON_H */
+#endif /* BENCH_COMMON_H */

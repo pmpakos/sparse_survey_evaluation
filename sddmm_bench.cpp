@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 	
 	struct Matrix_Format * MF;   // Real matrices.
 
-	ValueType * x, * y;
+	ValueType * x, * y, * out;
 	long iterations;
 
 	char * file_in;
@@ -105,40 +105,40 @@ int main(int argc, char **argv)
 	);
 	printf("time convert to format: %lf\n", time);
 
-	x = (typeof(x)) aligned_alloc(64, csr_n * k * sizeof(*x));
+	x = (typeof(x)) aligned_alloc(64, csr_m * k * sizeof(*x));
 	#pragma omp parallel for
-	for(long i=0; i<csr_n * k; ++i)
+	for(long i=0; i<csr_m * k; ++i)
 		x[i] = 1.0;
-	y = (typeof(y)) aligned_alloc(64, csr_m * k * sizeof(sizeof(*y)));
+	y = (typeof(y)) aligned_alloc(64, k * csr_n * sizeof(sizeof(*y)));
 	#pragma omp parallel for
-	for(long i=0; i<csr_m * k; i++)
-		y[i] = 0.0;
+	for(long i=0; i<k * csr_n; i++)
+		y[i] = 1.0;
+	out = (typeof(out)) aligned_alloc(64, csr_nnz * sizeof(sizeof(*out)));
+	#pragma omp parallel for
+	for(long i=0; i<csr_nnz; i++)
+		out[i] = 0.0;
 
 	// warmup iteration
-	MF->spmm(x, y, k);
+	MF->sddmm(x, y, out, k);
 
 	// if GPU, need to run 1000 iterations more
-	for(int i=0; i<1000; i++) MF->spmm(x, y, k);
+	for(int i=0; i<1000; i++) MF->sddmm(x, y, out, k);
 
 	time = 0;
 	iterations = 128;
 	// iterations = 1;
 	for(int i=0; i<iterations; i++){
 		time += time_it(1, 
-			MF->spmm(x, y, k);
+			MF->sddmm(x, y, out, k);
 		);
 	}
 	double gflops = 2.0 * MF->nnz * k * iterations / time / 1e9;
-	printf("SpMM kernel - matrix: %s, format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->format_name, k, gflops);
+	printf("SDDMM kernel - matrix: %s, format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->format_name, k, gflops);
 
-	printf("---\n");
-	for(int i=0; i<10; i++){
-		printf("i=%d\t[ ", i);
-		for(int j=0; j<10; j++) 
-			printf("%lf ", y[i*k+j]);
-		printf("]\n");
-	}
-	printf("---\n");
+	// printf("---\nval_out = [ ");
+	// for(int i=0; i<100; i++)
+	// 	printf("%lf ", out[i]);
+	// printf("]\n---\n");
 
 	free(x);
 	free(y);

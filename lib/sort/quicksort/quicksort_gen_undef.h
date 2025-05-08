@@ -1,0 +1,11 @@
+#undef QUICKSORT_GEN_TYPE_1
+#undef QUICKSORT_GEN_TYPE_2
+#undef QUICKSORT_GEN_TYPE_3
+#undef QUICKSORT_GEN_SUFFIX
+#undef QUICKSORT_GEN_EXPAND
+#undef _TYPE_V
+#undef _TYPE_I
+#undef _TYPE_AD
+#undef quicksort
+#undef quicksort_parallel
+#undef quicksort_parallel_inplace

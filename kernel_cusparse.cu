@@ -30,10 +30,6 @@ extern "C"{
 	#define ValueTypeCuda  CUDA_R_64F
 #endif
 
-#ifndef TIME_IT
-#define TIME_IT 0
-#endif
-
 struct CSRArrays : Matrix_Format
 {
 	INT_T * ia;      // the usual rowptr (of size m+1)
@@ -57,11 +53,14 @@ struct CSRArrays : Matrix_Format
 	ValueType * x = NULL;
 	ValueType * y = NULL;
 	ValueType * out = NULL;
+	
 	ValueType * x_d = NULL;
 	ValueType * y_d = NULL;
+	
 	ValueType * x_h = NULL;
 	ValueType * y_h = NULL;
 	ValueType * out_h = NULL;
+	
 	cusparseDnMatDescr_t matX;
 	cusparseDnMatDescr_t matY;
 

@@ -117,6 +117,15 @@ int main(int argc, char **argv)
 	// warmup iteration
 	MF->spmm(x, y, k);
 
+	printf("---\n");
+	for(int i=0; i<10; i++){
+		printf("i=%d\t[ ", i);
+		for(int j=0; j<10; j++) 
+			printf("%lf ", y[i*k+j]);
+		printf("]\n");
+	}
+	printf("---\n");
+
 	// if GPU, need to run 1000 iterations more
 	for(int i=0; i<1000; i++) MF->spmm(x, y, k);
 
@@ -130,15 +139,6 @@ int main(int argc, char **argv)
 	}
 	double gflops = 2.0 * MF->nnz * k * iterations / time / 1e9;
 	printf("SpMM kernel - matrix: %s, format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->format_name, k, gflops);
-
-	printf("---\n");
-	for(int i=0; i<10; i++){
-		printf("i=%d\t[ ", i);
-		for(int j=0; j<10; j++) 
-			printf("%lf ", y[i*k+j]);
-		printf("]\n");
-	}
-	printf("---\n");
 
 	free(x);
 	free(y);

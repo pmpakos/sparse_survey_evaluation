@@ -1,0 +1,47 @@
+οι tf32TransposeCompute, tf32TransposeAdpBalanceCompute
+θα πάνε σε ενα cu αρχείο
+(όπως το gespmm_v2.cu)
+
+το tf32_spmm θα παραμείνει σ ένα cc αρχείο
+(όπως το gespmm.cc)
+
+και μετα θα φτιαξω ενα obj file για καθε cu Και cc αρχειο
+
+
+
+
+When you run the following commands:
+
+ar cr libspmm.a spmm.o
+ranlib libspmm.a
+
+1. ar cr libspmm.a spmm.o
+
+    ar (Archiver) is used to create static libraries (.a files).
+    c → Create a new archive (if it doesn’t exist).
+    r → Insert/replace spmm.o into libspmm.a. If spmm.o already exists, it replaces the older version.
+    libspmm.a is the static library that will now contain spmm.o.
+
+2. ranlib libspmm.a
+
+    ranlib generates an index (symbol table) for the archive.
+    This index allows the linker to quickly look up symbols when linking against the library.
+    It's mostly needed for some older Unix systems where ar does not automatically create an index.
+    On modern systems, ar often includes this functionality, making ranlib unnecessary.
+
+Summary
+
+After these commands:
+
+    libspmm.a is a static library containing spmm.o.
+    The linker can now link against libspmm.a using:
+    g++ main.cpp -L. -lspmm -o my_program
+    where -L. tells the linker to look in the current directory, and -lspmm links against libspmm.a.
+
+
+
+
+Επομένως θα πρέπει να φτιαχτεί το obj για το καθένα, και μετά
+
+
+του ptx_tf32.h πρεπει να πάνε όλα σε cu αρχείο.

@@ -91,19 +91,19 @@ do
     echo '--------'
     echo ${path_validation}/$a
     # ./mat_read.exe ${path_validation}/$a
-    ./spmm_cusparse.exe ${path_validation}/$a 128
-    ./sddmm_cusparse.exe ${path_validation}/$a 128
-    # ./mat_gnnpilot_spmm.exe ${path_validation}/$a 128 1
-    # ./mat_gnnpilot_spmm.exe ${path_validation}/$a 128 2
-    # ./mat_gnnpilot_sddmm.exe ${path_validation}/$a 128 1
-    # ./mat_gnnpilot_sddmm.exe ${path_validation}/$a 128 2
+    # ./spmm_cusparse.exe ${path_validation}/$a 128
+    # ./sddmm_cusparse.exe ${path_validation}/$a 128
+    # ./spmm_mkl.exe ${path_validation}/$a 128
+    # ./spmm_acc.exe ${path_validation}/$a 128
+    ./spmm_aspt_cpu.exe ${path_validation}/$a 128
+    ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
+    
 done
 
 # for a in "${matrices[@]}"
 # do
     # echo '--------'
     # echo ${path_validation}/$a
-    # ./mat_read.exe ${path_validation}/$a
 
     ####################### GPU #######################
     # cuSPARSE
@@ -117,6 +117,34 @@ done
     # do
     #     ./mat_cusparse_sddmm.exe ${path_validation}/$a ${middle}
     # done
+
+    # ACC
+    # for k in 128;
+    # do
+    #     ./mat_acc_spmm.exe ${path_validation}/$a ${k}
+    # done
+
+    ####################### CPU #######################
+    
+    # MKL
+    # ./mat_mkl_spmv.exe ${path_validation}/$a
+    # for k in 16;
+    # do
+    #     ./mat_mkl_spmm.exe ${path_validation}/$a ${k}
+    # done
+
+    # ASpT-CPU
+    # for k in 16;
+    # do
+    #     ./mat_aspt_spmm_cpu.exe ${path_validation}/$a ${k}
+    # done
+    # for middle in 16;
+    # do
+    #     ./mat_aspt_sddmm_cpu.exe ${path_validation}/$a ${middle}
+    # done
+
+
+    ####################################################
 
     # dgSPARSE
     # for k in 128;
@@ -146,12 +174,6 @@ done
     # for middle in 16;
     # do
     #     ./mat_sputnik_sddmm.exe ${path_validation}/$a ${middle}
-    # done
-
-    # ACC
-    # for k in 128;
-    # do
-    #     ./mat_acc_spmm.exe ${path_validation}/$a ${k}
     # done
 
     # ASpT
@@ -197,15 +219,19 @@ done
     #     ./mat_hc_spmm.exe ${path_validation}/$a ${k}
     # done
 
-    ####################### CPU #######################
-    
-    # MKL
-    # ./mat_mkl_spmv.exe ${path_validation}/$a
-    # for k in 16;
+    # GNN-Pilot
+    # for k in 128;
     # do
-    #     ./mat_mkl_spmm.exe ${path_validation}/$a ${k}
+    #     ./mat_gnnpilot_spmm.exe ${path_validation}/$a ${k} 1
+    #     ./mat_gnnpilot_spmm.exe ${path_validation}/$a ${k} 2
     # done
-    
+    # for middle in 128;
+    # do
+    #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 1
+    #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 2
+    # done
+    ####################### CPU #######################
+
     # AOCL-Sparse
     # ./mat_aocl_spmv.exe ${path_validation}/$a
     # for k in 16;
@@ -220,16 +246,6 @@ done
     # export AOCL_PATH=/various/pmpakos/epyc5_libs/aocl-sparse-3.2/build/release/
     # export LD_LIBRARY_PATH="${AOCL_PATH}/lib"
     # ./mat_aocl_spmv3.exe ${path_validation}/$a
-
-    # ASpT-CPU
-    # for k in 16;
-    # do
-    #     ./mat_aspt_spmm_cpu.exe ${path_validation}/$a ${k}
-    # done
-    # for middle in 16;
-    # do
-    #     ./mat_aspt_sddmm_cpu.exe ${path_validation}/$a ${middle}
-    # done
 
     # FusedMM
     # for k in 16;

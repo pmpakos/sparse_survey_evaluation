@@ -1,14 +1,18 @@
 
 EXE  = 
-# EXE += mat_read.exe 
-# EXE += mat_cusparse_spmv.exe spmm_cusparse.exe mat_cusparse_sddmm.exe 
-EXE += spmm_cusparse.exe sddmm_cusparse.exe 
+# GPU
+# EXE += spmm_cusparse.exe sddmm_cusparse.exe 
+# EXE += spmm_acc.exe
+
+# CPU
+# EXE += spmm_mkl.exe
+EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+
 # EXE += mat_dgsparse_spmm.exe mat_dgsparse_sddmm.exe 
 # EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
-# EXE += mat_acc_spmm.exe
 # EXE += mat_aspt_spmm.exe mat_aspt_sddmm.exe
 # EXE += mat_aspt_spmm_cpu.exe mat_aspt_sddmm_cpu.exe
-# EXE += mat_mkl_spmv.exe mat_mkl_spmm.exe
+
 # EXE += mat_aocl_spmv.exe mat_aocl_spmm.exe mat_aocl_spmv3.exe mat_aocl_spmv4.exe 
 # EXE += mat_fused_spmm.exe
 # EXE += mat_rode_spmm.exe mat_rode_sddmm.exe
@@ -104,7 +108,7 @@ CPPFLAGS+=" ${CFLAGS}"
 #########################
 
 LIBS_ROOT=/various/pmpakos/epyc5_libs
-SPARSE_SURVEY_ROOT=/various/pmpakos/sparse_survey/github
+SPARSE_SURVEY_ROOT=/various/pmpakos/sparse_survey/github/deps
 
 
 ########## GPU ##########
@@ -216,8 +220,26 @@ spmm_cusparse.exe: obj/spmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
 sddmm_cusparse.exe: obj/sddmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
 
-# # mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
-# # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
+spmm_acc.exe: obj/spmm_bench.o kernel_acc.cu $(LIB_OBJ)
+	cd $(ACC_PATH); make clean; make -j; cd -
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(ACC_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(ACC_PATH)' -lacc_spmm
+
+########## CPU ##########
+
+# mat_mkl_spmv.exe: mat_mkl_spmv.cpp $(LIB_OBJ)
+# 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
+spmm_mkl.exe: obj/spmm_bench.o kernel_mkl.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
+
+spmm_aspt_cpu.exe: obj/spmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
+	cd $(ASPT_PATH)/cpu/spmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu/' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/spmm' -laspt_cpu_spmm
+sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
+	cd $(ASPT_PATH)/cpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
+	$(CPP) $(CFLAGS) -D'SDDMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu/' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/sddmm' -laspt_cpu_sddmm
+
+# mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
+# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
 # mat_dgsparse_spmm.exe: mat_dgsparse_spmm.cpp $(LIB_OBJ)
 # 	cd $(DGSPARSE_PATH)/ge-spmm; make clean; make -j; cd -
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o $@ $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
@@ -231,10 +253,6 @@ sddmm_cusparse.exe: obj/sddmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
 # mat_sputnik_sddmm.exe: mat_sputnik_sddmm.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
 
-# mat_acc_spmm.exe: mat_acc_spmm.cu $(LIB_OBJ)
-# 	cd $(ACC_PATH); make clean; make -j; cd -
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(ACC_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(ACC_PATH)' -lacc_spmm
-
 # mat_aspt_spmm.exe: mat_aspt_spmm.cu $(LIB_OBJ)
 # 	cd $(ASPT_PATH)/gpu/spmm; make clean; make DOUBLE=$(DOUBLE) -j; cd -
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(ASPT_PATH)/gpu/spmm'" $^ -o $@ $(LDFLAGS) -L'$(ASPT_PATH)/gpu/spmm' -laspt_spmm
@@ -242,12 +260,6 @@ sddmm_cusparse.exe: obj/sddmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
 # 	cd $(ASPT_PATH)/gpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(ASPT_PATH)/gpu/sddmm'" $^ -o $@ $(LDFLAGS) -L'$(ASPT_PATH)/gpu/sddmm/' -laspt_sddmm
 
-# mat_aspt_spmm_cpu.exe: mat_aspt_spmm_cpu.cpp $(LIB_OBJ)
-# 	cd $(ASPT_PATH)/cpu/spmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
-# 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(ASPT_PATH)/cpu/spmm/' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/spmm' -laspt_cpu_spmm
-# mat_aspt_sddmm_cpu.exe: mat_aspt_sddmm_cpu.cpp $(LIB_OBJ)
-# 	cd $(ASPT_PATH)/cpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
-# 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(ASPT_PATH)/cpu/sddmm/' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/sddmm' -laspt_cpu_sddmm
 
 # mat_fused_spmm.exe: mat_fused_spmm.cpp $(LIB_OBJ)
 # 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null; cd -;
@@ -295,12 +307,8 @@ sddmm_cusparse.exe: obj/sddmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
 # 	cd $(GNNPILOT_PATH); make clean; make -j; cd -
 # 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 
-# ########## CPU ##########
 
-# mat_mkl_spmv.exe: mat_mkl_spmv.cpp $(LIB_OBJ)
-# 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
-# mat_mkl_spmm.exe: mat_mkl_spmm.cpp $(LIB_OBJ)
-# 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
+# ########## CPU ##########
 
 # mat_aocl_spmv.exe: mat_aocl_spmv.cpp $(LIB_OBJ)
 # 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL5) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL5)

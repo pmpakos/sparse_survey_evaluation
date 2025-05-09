@@ -8,7 +8,8 @@ EXE  =
 # CPU
 # EXE += spmm_mkl.exe
 # EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-EXE += spmm_aocl.exe
+# EXE += spmm_aocl.exe
+EXE += spmm_fusedmm.exe
 
 # EXE += mat_dgsparse_spmm.exe mat_dgsparse_sddmm.exe 
 # EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
@@ -256,6 +257,10 @@ sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
 # 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL4) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL4)
 spmm_aocl.exe: obj/spmm_bench.o kernel_aocl.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL5) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL5)
+
+spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
+	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null 2>&1; cd -;
+	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
 
 # mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)

@@ -31,7 +31,6 @@ export LD_LIBRARY_PATH=/various/pmpakos/sparse_survey/code/libtorch_cuda/lib/:$L
 export LD_LIBRARY_PATH=/various/pmpakos/sparse_survey/code/libtorch_cuda/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/various/dgal/gcc/gcc-12.2.0/gcc_bin/lib64/:$LD_LIBRARY_PATH
 
-
 # lscpu | grep -q -i amd
 # if (($? == 0)); then
 #     export MKL_DEBUG_CPU_TYPE=5
@@ -39,7 +38,7 @@ export LD_LIBRARY_PATH=/various/dgal/gcc/gcc-12.2.0/gcc_bin/lib64/:$LD_LIBRARY_P
 # export MKL_ENABLE_INSTRUCTIONS=AVX512
 # export MKL_VERBOSE=1
 
-matrices_validation=(
+matrices=(
     scircuit.mtx
     # mac_econ_fwd500.mtx
     # raefsky3.mtx
@@ -76,30 +75,33 @@ matrices_validation=(
     # Ga41As41H72.mtx
 )
 
-matrices=(
-    "${matrices_validation[@]}"
-)
-
-
 make clean;
 time make -j
-# time make
 # export OMP_DISPLAY_ENV=TRUE
 
+export GPU_KERNEL=1
 for a in "${matrices[@]}"
 do
     echo '--------'
     echo ${path_validation}/$a
-    # ./mat_read.exe ${path_validation}/$a
     # ./spmm_cusparse.exe ${path_validation}/$a 128
     # ./sddmm_cusparse.exe ${path_validation}/$a 128
+    # ./spmm_aspt_gpu.exe ${path_validation}/$a 128
+    # ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
+done
+
+# For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
+export GPU_KERNEL=0
+for a in "${matrices[@]}"
+do
+    echo '--------'
+    echo ${path_validation}/$a
     # ./spmm_mkl.exe ${path_validation}/$a 128
     # ./spmm_acc.exe ${path_validation}/$a 128
     # ./spmm_aspt_cpu.exe ${path_validation}/$a 128
     # ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
-    # ./spmm_aspt_gpu.exe ${path_validation}/$a 128
-    # ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
-    ./spmm_aocl.exe ${path_validation}/$a 128
+    # ./spmm_aocl.exe ${path_validation}/$a 128
+    ./spmm_fusedmm.exe ${path_validation}/$a 128
 done
 
 # for a in "${matrices[@]}"
@@ -144,6 +146,14 @@ done
     #     ./mat_mkl_spmm.exe ${path_validation}/$a ${k}
     # done
 
+    # export AOCL_PATH=/various/pmpakos/epyc5_libs/aocl-sparse-4.0/build/release/
+    # export LD_LIBRARY_PATH="${AOCL_PATH}/lib"
+    # ./mat_aocl_spmv4.exe ${path_validation}/$a
+
+    # export AOCL_PATH=/various/pmpakos/epyc5_libs/aocl-sparse-3.2/build/release/
+    # export LD_LIBRARY_PATH="${AOCL_PATH}/lib"
+    # ./mat_aocl_spmv3.exe ${path_validation}/$a
+
     # AOCL-Sparse
     # ./mat_aocl_spmv.exe ${path_validation}/$a
     # for k in 16;
@@ -161,6 +171,11 @@ done
     #     ./mat_aspt_sddmm_cpu.exe ${path_validation}/$a ${middle}
     # done
 
+    # FusedMM
+    # for k in 16;
+    # do
+    #     ./mat_fused_spmm.exe ${path_validation}/$a ${k}
+    # done
 
     ####################################################
 
@@ -238,20 +253,4 @@ done
     #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 1
     #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 2
     # done
-    ####################### CPU #######################
-
-    # export AOCL_PATH=/various/pmpakos/epyc5_libs/aocl-sparse-4.0/build/release/
-    # export LD_LIBRARY_PATH="${AOCL_PATH}/lib"
-    # ./mat_aocl_spmv4.exe ${path_validation}/$a
-
-    # export AOCL_PATH=/various/pmpakos/epyc5_libs/aocl-sparse-3.2/build/release/
-    # export LD_LIBRARY_PATH="${AOCL_PATH}/lib"
-    # ./mat_aocl_spmv3.exe ${path_validation}/$a
-
-    # FusedMM
-    # for k in 16;
-    # do
-    #     ./mat_fused_spmm.exe ${path_validation}/$a ${k}
-    # done
-
 # done

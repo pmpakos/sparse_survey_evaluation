@@ -2,11 +2,9 @@
 #include <stdio.h>
 #include <omp.h>
 
-#ifdef SPMM_KERNEL
-	#include "spmm/aspt_spmm.h"
-#else
-	#include "sddmm/aspt_sddmm.h"
-#endif
+#include "aoclsparse_mat_structures.hpp"
+#include "aoclsparse_descr.h"
+#include "aoclsparse.h"
 
 #include "macros/cpp_defines.h"
 
@@ -34,51 +32,26 @@ struct CSRArrays : Matrix_Format
 	ValueType * y = NULL;
 	ValueType * out = NULL;
 
-	int nr = 0, special_p = 0;
-	double vari = 0;
-	int * ja_aspt, * special, * special2, * mcsr_e, * mcsr_cnt;
-	ValueType * a_aspt;
+	aoclsparse_matrix A;
+	aoclsparse_mat_descr descr; // aoclsparse_matrix_type_general
+	aoclsparse_operation operation = aoclsparse_operation_none;
+	aoclsparse_order order = aoclsparse_order_row;
 
 	CSRArrays(INT_T * ia, INT_T * ja, ValueType * a, long m, long n, long nnz) : Matrix_Format(m, n, nnz), ia(ia), ja(ja), a(a)
 	{
-		nr = CEIL(m,BH)*BH;
-		int npanel = CEIL(nr,BH);
-		double avg = 0;
+		aoclsparse_index_base base = aoclsparse_index_base_zero;
+		const int expected_calls = 128;
 
-		special = (int *)malloc(sizeof(int)*nnz);
-		special2 = (int *)malloc(sizeof(int)*nnz);
-		mcsr_cnt = (int *)malloc(sizeof(int)*(npanel+1));
-		int * mcsr_chk = (int *)malloc(sizeof(int)*(npanel+1));
-		mcsr_e = (int *)malloc(sizeof(int)*nnz); // reduced later
+		aoclsparse_create_mat_descr(&descr);
+		aoclsparse_set_mat_index_base(descr, base);
+		#if DOUBLE == 0
+			aoclsparse_create_scsr(&A, base, m, n, nnz, ia, ja, a);
+		#elif DOUBLE == 1
+			aoclsparse_create_dcsr(&A, base, m, n, nnz, ia, ja, a);
+		#endif
 
-		int * row_ptr0;
-		int * col_idx0;
-		ValueType * val0;
-
-		row_ptr0 = (int *)malloc(sizeof(int)*(nr+1));
-		memset(row_ptr0, 0, sizeof(int)*(nr+1));
-		memcpy(row_ptr0, ia, sizeof(int)*(m+1));
-		for(int i=m; i<nr; i++)
-			row_ptr0[i+1] = row_ptr0[i];
-
-		col_idx0 = (int *)malloc(sizeof(int)*nnz+256);
-		memset(col_idx0, 0, sizeof(int)*nnz+256);
-		memcpy(col_idx0, ja, sizeof(int)*nnz);
-		val0 = (ValueType *)malloc(sizeof(ValueType)*nnz+256);
-		memset(val0, 0, sizeof(ValueType)*nnz+256);
-		memcpy(val0, a, sizeof(ValueType)*nnz);
-
-		ja_aspt = (int *)malloc(sizeof(int)*nnz+256);
-		a_aspt = (ValueType *)malloc(sizeof(ValueType)*nnz+256);
-
-		double time = time_it(1,
-			aspt_preprocess_cpu(row_ptr0, col_idx0, val0, ja_aspt, a_aspt, n, nnz, nr, npanel, &avg, &vari, special, special2, &special_p, mcsr_e, mcsr_cnt, mcsr_chk);
-		);
-		printf("time aspt_sddmm_preprocess = %lf\n", time);
-
-		free(row_ptr0);
-		free(col_idx0);
-		free(val0);
+		aoclsparse_set_mm_hint(A, operation, descr, expected_calls);
+		aoclsparse_optimize(A);
 	}
 
 	~CSRArrays()
@@ -87,12 +60,8 @@ struct CSRArrays : Matrix_Format
 		free(ia);
 		free(ja);
 
-		free(ja_aspt);
-		free(special);
-		free(special2);
-		free(mcsr_e);
-		free(mcsr_cnt);
-		free(a_aspt);
+		aoclsparse_destroy_mat_descr(descr);
+		aoclsparse_destroy(&A);
 	}
 
 	void spmm(ValueType * x, ValueType * y, int k);
@@ -119,7 +88,7 @@ csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long
 {
 	struct CSRArrays * csr = new CSRArrays(row_ptr, col_ind, values, m, n, nnz);
 	csr->mem_footprint = nnz * (sizeof(ValueType) + sizeof(INT_T)) + (m+1) * sizeof(INT_T);
-	csr->format_name = (char *) "ASpT-CPU";
+	csr->format_name = (char *) "AOCL";
 	return csr;
 }
 
@@ -137,8 +106,10 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 		csr->x = x;
 	}
 
-	#ifdef SPMM_KERNEL
-		aspt_spmm_cpu(csr->ja_aspt, csr->a_aspt, x, y, k, csr->nr, csr->vari, csr->special, csr->special2, csr->special_p, csr->mcsr_e, csr->mcsr_cnt);
+	#if DOUBLE == 0
+		aoclsparse_scsrmm(csr->operation, alpha, csr->A, csr->descr, csr->order, x, k, k, beta, y, k);
+	#elif DOUBLE == 1
+		aoclsparse_dcsrmm(csr->operation, alpha, csr->A, csr->descr, csr->order, x, k, k, beta, y, k);
 	#endif
 
 	if (csr->y == NULL)
@@ -157,10 +128,6 @@ compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * rest
 		csr->x = x;
 		csr->y = y;
 	}
-
-	#ifdef SDDMM_KERNEL
-		aspt_sddmm_cpu(csr->ja_aspt, csr->a_aspt, x, y, out, k, csr->nr, csr->vari, csr->special, csr->special2, csr->special_p, csr->mcsr_e, csr->mcsr_cnt);
-	#endif
 
 	if (csr->out == NULL)
 	{

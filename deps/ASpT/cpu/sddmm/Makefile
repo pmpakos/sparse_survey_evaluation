@@ -5,7 +5,7 @@ COMPILER_PREFIX=/various/dgal/gcc/gcc-12.2.0/gcc_bin/bin
 
 CC = $(COMPILER_PREFIX)/g++
 
-TARGET = libaspt_cpu_sddmm.a
+TARGET = libaspt_sddmm.a
 
 SRCS = $(wildcard *.cc)
 OBJS = $(patsubst %cc, %cc.o, $(SRCS))

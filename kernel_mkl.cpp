@@ -34,12 +34,13 @@ struct CSRArrays : Matrix_Format
 	matrix_descr descr;
 	const sparse_operation_t operation = SPARSE_OPERATION_NON_TRANSPOSE;
 	const sparse_layout_t layout = SPARSE_LAYOUT_ROW_MAJOR;
-	const sparse_index_base_t indexing = SPARSE_INDEX_BASE_ZERO;
-	const sparse_memory_usage_t policy = SPARSE_MEMORY_NONE;
-	const int expected_calls = 128;
 
 	CSRArrays(INT_T * ia, INT_T * ja, ValueType * a, long m, long n, long nnz) : Matrix_Format(m, n, nnz), ia(ia), ja(ja), a(a)
 	{
+		const sparse_index_base_t indexing = SPARSE_INDEX_BASE_ZERO;
+		const sparse_memory_usage_t policy = SPARSE_MEMORY_NONE;
+		const int expected_calls = 128;
+
 		descr.type = SPARSE_MATRIX_TYPE_GENERAL;
 		mkl_verbose(1);
 		#if DOUBLE == 0
@@ -108,9 +109,9 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 		csr->x = x;
 	}
 
-    #if DOUBLE == 0
+	#if DOUBLE == 0
 		mkl_sparse_s_mm(csr->operation, alpha, csr->A, csr->descr, csr->layout, x, k, k, beta, y, k);
-    #elif DOUBLE == 1
+	#elif DOUBLE == 1
 		mkl_sparse_d_mm(csr->operation, alpha, csr->A, csr->descr, csr->layout, x, k, k, beta, y, k);
 	#endif
 

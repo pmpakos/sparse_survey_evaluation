@@ -95,9 +95,11 @@ do
     # ./sddmm_cusparse.exe ${path_validation}/$a 128
     # ./spmm_mkl.exe ${path_validation}/$a 128
     # ./spmm_acc.exe ${path_validation}/$a 128
-    ./spmm_aspt_cpu.exe ${path_validation}/$a 128
-    ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
-    
+    # ./spmm_aspt_cpu.exe ${path_validation}/$a 128
+    # ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
+    # ./spmm_aspt_gpu.exe ${path_validation}/$a 128
+    # ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
+    ./spmm_aocl.exe ${path_validation}/$a 128
 done
 
 # for a in "${matrices[@]}"
@@ -124,6 +126,15 @@ done
     #     ./mat_acc_spmm.exe ${path_validation}/$a ${k}
     # done
 
+    # ASpT
+    # for k in 128;
+    # do
+    #     ./mat_aspt_spmm.exe ${path_validation}/$a ${k}
+    # done
+    # for middle in 16;
+    # do
+    #     ./mat_aspt_sddmm.exe ${path_validation}/$a ${middle}
+    # done
     ####################### CPU #######################
     
     # MKL
@@ -131,6 +142,13 @@ done
     # for k in 16;
     # do
     #     ./mat_mkl_spmm.exe ${path_validation}/$a ${k}
+    # done
+
+    # AOCL-Sparse
+    # ./mat_aocl_spmv.exe ${path_validation}/$a
+    # for k in 16;
+    # do
+    #     ./mat_aocl_spmm.exe ${path_validation}/$a ${k}
     # done
 
     # ASpT-CPU
@@ -174,16 +192,6 @@ done
     # for middle in 16;
     # do
     #     ./mat_sputnik_sddmm.exe ${path_validation}/$a ${middle}
-    # done
-
-    # ASpT
-    # for k in 128;
-    # do
-    #     ./mat_aspt_spmm.exe ${path_validation}/$a ${k}
-    # done
-    # for middle in 16;
-    # do
-    #     ./mat_aspt_sddmm.exe ${path_validation}/$a ${middle}
     # done
 
     # RoDe
@@ -231,13 +239,6 @@ done
     #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 2
     # done
     ####################### CPU #######################
-
-    # AOCL-Sparse
-    # ./mat_aocl_spmv.exe ${path_validation}/$a
-    # for k in 16;
-    # do
-    #     ./mat_aocl_spmm.exe ${path_validation}/$a ${k}
-    # done
 
     # export AOCL_PATH=/various/pmpakos/epyc5_libs/aocl-sparse-4.0/build/release/
     # export LD_LIBRARY_PATH="${AOCL_PATH}/lib"

@@ -341,8 +341,8 @@ csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long
 void
 compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, int k)
 {
-	// const ValueType alpha = 1.0;
-	// const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;
@@ -402,8 +402,8 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 void
 compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k)
 {
-	// const ValueType alpha = 1.0;
-	// const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;
@@ -464,7 +464,7 @@ compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * rest
 
 		csr->out = out;
 
-		gpuCudaErrorCheck(cudaMemcpyAsync(csr->out_h, csr->a_d, csr->nnz * sizeof(*csr->a_d), cudaMemcpyDeviceToHost, csr->stream));
+		gpuCudaErrorCheck(cudaMemcpyAsync(csr->out_h, csr->out_d, csr->nnz * sizeof(*csr->out_d), cudaMemcpyDeviceToHost, csr->stream));
 		gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
 		memcpy(out, csr->out_h, csr->nnz * sizeof(ValueType));
 	}

@@ -1,25 +1,26 @@
 
 EXE  = 
 # GPU
-EXE += spmm_cusparse.exe sddmm_cusparse.exe 
-EXE += spmm_acc.exe
-EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+# EXE += spmm_cusparse.exe sddmm_cusparse.exe 
+# EXE += spmm_acc.exe
+# EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+EXE += spmm_rode.exe sddmm_rode.exe
 
 # CPU
-EXE += spmm_mkl.exe
-EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-EXE += spmm_aocl.exe
-EXE += spmm_fusedmm.exe
+# EXE += spmm_mkl.exe
+# EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+# EXE += spmm_aocl.exe
+# EXE += spmm_fusedmm.exe
 
 # EXE += mat_dgsparse_spmm.exe mat_dgsparse_sddmm.exe 
 # EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
 # EXE += mat_aspt_spmm.exe mat_aspt_sddmm.exe
 # EXE += mat_aspt_spmm_cpu.exe mat_aspt_sddmm_cpu.exe
-
 # EXE += mat_aocl_spmv.exe mat_aocl_spmm.exe mat_aocl_spmv3.exe mat_aocl_spmv4.exe 
 # EXE += mat_fused_spmm.exe
 # EXE += mat_rode_spmm.exe mat_rode_sddmm.exe
 # EXE += mat_octet_spmm.exe
+
 # EXE += mat_dtc_v1_spmm.exe mat_dtc_v2_spmm.exe # mat_dtc_v3_spmm.exe
 # EXE += mat_hc_spmm.exe
 # EXE += mat_gnnpilot_spmm.exe
@@ -234,6 +235,12 @@ sddmm_aspt_gpu.exe: obj/sddmm_bench.o kernel_aspt_gpu.cu $(LIB_OBJ)
 	cd $(ASPT_PATH)/gpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(ASPT_PATH)/gpu'" $^ -o $@ $(LDFLAGS) -L'$(ASPT_PATH)/gpu/sddmm/' -laspt_sddmm
 
+spmm_rode.exe: obj/spmm_bench.o kernel_rode.cu $(LIB_OBJ)
+	cd $(RODE_PATH)/spmm; make clean; make -j; cd -
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -I'$(RODE_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/spmm' -lrode_spmm
+sddmm_rode.exe: obj/sddmm_bench.o kernel_rode.cu $(LIB_OBJ)
+	cd $(RODE_PATH)/sddmm; make clean; make -j; cd -
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(RODE_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/sddmm' -lrode_sddmm
 ########## CPU ##########
 
 # mat_mkl_spmv.exe: mat_mkl_spmv.cpp $(LIB_OBJ)
@@ -258,6 +265,9 @@ sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
 spmm_aocl.exe: obj/spmm_bench.o kernel_aocl.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL5) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL5)
 
+# mat_fused_sddmm.exe: mat_fused_sddmm.cpp $(LIB_OBJ)
+# 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null; cd -;
+# 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
 spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null 2>&1; cd -;
 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
@@ -277,28 +287,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 # mat_sputnik_sddmm.exe: mat_sputnik_sddmm.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
 
-
-# mat_fused_spmm.exe: mat_fused_spmm.cpp $(LIB_OBJ)
-# 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null; cd -;
-# 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
-# # mat_fused_sddmm.exe: mat_fused_sddmm.cpp $(LIB_OBJ)
-# # 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null; cd -;
-# # 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
-
-# mat_rode_spmm.exe: mat_rode_spmm.cu $(LIB_OBJ)
-# 	cd $(RODE_PATH)/spmm; make clean; make -j; cd -
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(RODE_PATH)/spmm'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/spmm' -lrode_spmm
-
-# mat_rode_sddmm.exe: mat_rode_sddmm.cu $(LIB_OBJ)
-# 	cd $(RODE_PATH)/sddmm; make clean; make -j; cd -
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(RODE_PATH)/sddmm'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/sddmm' -lrode_sddmm
-
-
-# mat_octet_spmm.exe: mat_octet_spmm.cu $(LIB_OBJ)
-# 	cd $(OCTET_PATH); make clean; make -j spmm_benchmark; cd -
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(OCTET_PATH)/include'" $^ -o $@ $(LDFLAGS) $(OCTET_PATH)/bin/cuda_spmm.o
-
-
 # mat_dtc_v1_spmm.exe: mat_dtc_v1_spmm.cu $(LIB_OBJ)
 # 	cd $(DTC_PATH); make clean; make -j; cd -
 # 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
@@ -310,7 +298,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 # # mat_dtc_v3_spmm.exe: mat_dtc_v3_spmm.cu $(LIB_OBJ)
 # # 	cd $(DTC_PATH); make clean; make -j; cd -
 # # 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
-
 
 # mat_hc_spmm.exe: mat_hc_spmm.cu $(LIB_OBJ)
 # 	cd $(HC_PATH); make clean; make -j; cd -

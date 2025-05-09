@@ -1,9 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
-
-#include <cuda.h>
-#include "acc_spmm_v2.h"
+#include <stdlib.h>
 
 #include "macros/cpp_defines.h"
 
@@ -16,18 +12,14 @@ extern "C"{
 	#include "macros/macrolib.h"
 	#include "time_it.h"
 	#include "parallel_util.h"
-	#include "array_metrics.h"
 
 	#include "cuda/cuda_util.h"
 #ifdef __cplusplus
 }
 #endif
 
-#if DOUBLE == 0
-	#define ValueTypeCuda  CUDA_R_32F
-#elif DOUBLE == 1
-	#define ValueTypeCuda  CUDA_R_64F
-#endif
+#include <cuda.h>
+#include "acc_spmm_v2.h"
 
 struct CSRArrays : Matrix_Format
 {
@@ -475,42 +467,19 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 }
 
 void
-compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k)
+compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, __attribute__((unused)) int k)
 {
-	// const ValueType alpha = 1.0;
-	// const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;
 		csr->y = y;
 
-		// gpuCudaErrorCheck(cudaMalloc((void**)&csr->x_d, csr->m * k * sizeof(*csr->x_d)));
-		// gpuCudaErrorCheck(cudaMalloc((void**)&csr->y_d, k * csr->n * sizeof(*csr->y_d)));
-
-		// gpuCudaErrorCheck(cudaMallocHost((void**)&csr->x_h, csr->m * k * sizeof(*csr->x_h)));
-		// gpuCudaErrorCheck(cudaMallocHost((void**)&csr->y_h, k * csr->n * sizeof(*csr->y_h)));
-
-		// memcpy(csr->x_h, x, csr->m * k * sizeof(ValueType));
-		// memcpy(csr->y_h, y, k * csr->n * sizeof(ValueType));
-
-		// gpuCudaErrorCheck(cudaMemcpyAsync(csr->x_d, csr->x_h, csr->m * k * sizeof(*csr->x_d), cudaMemcpyHostToDevice, csr->stream));
-		// gpuCudaErrorCheck(cudaMemcpyAsync(csr->y_d, csr->y_h, k * csr->n * sizeof(*csr->y_d), cudaMemcpyHostToDevice, csr->stream));
-
-		// gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
 	}
-
-	k=0;
-	gpuCudaErrorCheck(cudaPeekAtLastError());
-	gpuCudaErrorCheck(cudaDeviceSynchronize());
 
 	if (csr->out == NULL)
 	{
-		gpuCudaErrorCheck(cudaMallocHost((void**)&csr->out_h, csr->nnz * sizeof(*csr->out_h)));
-
 		csr->out = out;
-
-		gpuCudaErrorCheck(cudaMemcpyAsync(csr->out_h, csr->a_d, csr->nnz * sizeof(*csr->a_d), cudaMemcpyDeviceToHost, csr->stream));
-		gpuCudaErrorCheck(cudaStreamSynchronize(csr->stream));
-		memcpy(out, csr->out_h, csr->nnz * sizeof(ValueType));
 	}
 }

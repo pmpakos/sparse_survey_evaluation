@@ -1,16 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
-
-#define INDEXTYPE int64_t
-#define VALUETYPE ValueType
-#include "fusedMM.h"
-extern "C" int SOP_UDEF_FUNC(VALUETYPE val, VALUETYPE *out);
-int SOP_UDEF_FUNC(VALUETYPE val, VALUETYPE *out)
-{
-	*out = val;;
-	return FUSEDMM_SUCCESS_RETURN;
-}
+#include <stdlib.h>
 
 #include "macros/cpp_defines.h"
 
@@ -23,10 +12,19 @@ extern "C"{
 	#include "macros/macrolib.h"
 	#include "time_it.h"
 	#include "parallel_util.h"
-	#include "array_metrics.h"
 #ifdef __cplusplus
 }
 #endif
+
+#define INDEXTYPE int64_t
+#define VALUETYPE ValueType
+#include "fusedMM.h"
+extern "C" int SOP_UDEF_FUNC(VALUETYPE val, VALUETYPE *out);
+int SOP_UDEF_FUNC(VALUETYPE val, VALUETYPE *out)
+{
+	*out = val;;
+	return FUSEDMM_SUCCESS_RETURN;
+}
 
 struct CSRArrays : Matrix_Format
 {
@@ -103,6 +101,7 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 	{
 		csr->x = x;
 	}
+
 	fusedMM_csr(csr->imsg, csr->m, csr->n, k, alpha, csr->nnz, csr->m, csr->n, csr->a, csr->col_idx_64, csr->row_ptr_64, csr->row_ptr_64 + 1, NULL, k, x, k, beta, y, k);
 
 	if (csr->y == NULL)
@@ -112,10 +111,10 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 }
 
 void
-compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k)
+compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, __attribute__((unused)) int k)
 {
-	const ValueType alpha = 1.0;
-	const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;

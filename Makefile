@@ -1,14 +1,14 @@
 
 EXE  = 
 # GPU
-# EXE += spmm_cusparse.exe sddmm_cusparse.exe 
-# EXE += spmm_acc.exe
-# EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+EXE += spmm_cusparse.exe sddmm_cusparse.exe 
+EXE += spmm_acc.exe
+EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
 
 # CPU
-# EXE += spmm_mkl.exe
-# EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-# EXE += spmm_aocl.exe
+EXE += spmm_mkl.exe
+EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+EXE += spmm_aocl.exe
 EXE += spmm_fusedmm.exe
 
 # EXE += mat_dgsparse_spmm.exe mat_dgsparse_sddmm.exe 

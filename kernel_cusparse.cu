@@ -1,9 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
-
-#include <cuda.h>
-#include <cusparse.h>
+#include <stdlib.h>
 
 #include "macros/cpp_defines.h"
 
@@ -16,9 +12,19 @@ extern "C"{
 	#include "macros/macrolib.h"
 	#include "time_it.h"
 	#include "parallel_util.h"
-	#include "array_metrics.h"
 
 	#include "cuda/cuda_util.h"
+	// #include "cuda/cusparse_util.h"
+#ifdef __cplusplus
+}
+#endif
+
+#include <cuda.h>
+#include <cusparse.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 	#include "cuda/cusparse_util.h"
 #ifdef __cplusplus
 }

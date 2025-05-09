@@ -1,12 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
-
-#ifdef SPMM_KERNEL
-	#include "spmm/aspt_spmm.h"
-#else
-	#include "sddmm/aspt_sddmm.h"
-#endif
+#include <stdlib.h>
 
 #include "macros/cpp_defines.h"
 
@@ -19,9 +12,15 @@ extern "C"{
 	#include "macros/macrolib.h"
 	#include "time_it.h"
 	#include "parallel_util.h"
-	#include "array_metrics.h"
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef SPMM_KERNEL
+	#include "spmm/aspt_spmm.h"
+#endif
+#ifdef SDDMM_KERNEL
+	#include "sddmm/aspt_sddmm.h"
 #endif
 
 struct CSRArrays : Matrix_Format
@@ -71,10 +70,7 @@ struct CSRArrays : Matrix_Format
 		ja_aspt = (int *)malloc(sizeof(int)*nnz+256);
 		a_aspt = (ValueType *)malloc(sizeof(ValueType)*nnz+256);
 
-		double time = time_it(1,
-			aspt_preprocess_cpu(row_ptr0, col_idx0, val0, ja_aspt, a_aspt, n, nnz, nr, npanel, &avg, &vari, special, special2, &special_p, mcsr_e, mcsr_cnt, mcsr_chk);
-		);
-		// printf("time aspt_preprocess = %lf\n", time);
+		aspt_preprocess_cpu(row_ptr0, col_idx0, val0, ja_aspt, a_aspt, n, nnz, nr, npanel, &avg, &vari, special, special2, &special_p, mcsr_e, mcsr_cnt, mcsr_chk);
 
 		free(row_ptr0);
 		free(col_idx0);
@@ -130,8 +126,8 @@ csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long
 void
 compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, int k)
 {
-	const ValueType alpha = 1.0;
-	const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;
@@ -150,8 +146,8 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 void
 compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k)
 {
-	const ValueType alpha = 1.0;
-	const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;

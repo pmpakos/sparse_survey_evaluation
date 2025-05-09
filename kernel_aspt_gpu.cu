@@ -1,14 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
-
-#include <cuda.h>
-
-#ifdef SPMM_KERNEL
-	#include "spmm/aspt_spmm_v2.h"
-#else
-	#include "sddmm/aspt_sddmm_v2.h"
-#endif
+#include <stdlib.h>
 
 #include "macros/cpp_defines.h"
 
@@ -21,17 +12,19 @@ extern "C"{
 	#include "macros/macrolib.h"
 	#include "time_it.h"
 	#include "parallel_util.h"
-	#include "array_metrics.h"
 
 	#include "cuda/cuda_util.h"
 #ifdef __cplusplus
 }
 #endif
 
-#if DOUBLE == 0
-	#define ValueTypeCuda  CUDA_R_32F
-#elif DOUBLE == 1
-	#define ValueTypeCuda  CUDA_R_64F
+#include <cuda.h>
+
+#ifdef SPMM_KERNEL
+	#include "spmm/aspt_spmm_v2.h"
+#endif
+#ifdef SDDMM_KERNEL
+	#include "sddmm/aspt_sddmm_v2.h"
 #endif
 
 struct CSRArrays : Matrix_Format

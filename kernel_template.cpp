@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
 
 #include "macros/cpp_defines.h"
 

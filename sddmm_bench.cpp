@@ -23,7 +23,7 @@ extern "C"{
 #define Max(x,y) ((x)>(y)?(x):(y))
 #define Abs(x) ((x)>(0)?(x):-(x))
 
-void CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val,
+void CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, __attribute__((unused)) ValueType * val,
 	INT_T csr_m, INT_T csr_n, INT_T csr_nnz, 
 	INT_T dense_k,
 	ValueType * x, ValueType * y, ValueType * out)

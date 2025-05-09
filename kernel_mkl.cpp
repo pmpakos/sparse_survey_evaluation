@@ -1,8 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <omp.h>
-
-#include <mkl.h>
+#include <stdlib.h>
 
 #include "macros/cpp_defines.h"
 
@@ -15,10 +12,11 @@ extern "C"{
 	#include "macros/macrolib.h"
 	#include "time_it.h"
 	#include "parallel_util.h"
-	#include "array_metrics.h"
 #ifdef __cplusplus
 }
 #endif
+
+#include <mkl.h>
 
 struct CSRArrays : Matrix_Format
 {
@@ -122,10 +120,10 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 }
 
 void
-compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, int k)
+compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restrict y, ValueType * restrict out, __attribute__((unused)) int k)
 {
-	const ValueType alpha = 1.0;
-	const ValueType beta = 0.0;
+	__attribute__((unused)) const ValueType alpha = 1.0;
+	__attribute__((unused)) const ValueType beta = 0.0;
 	if (csr->x == NULL)
 	{
 		csr->x = x;

@@ -11,15 +11,72 @@ extern "C"{
 	#include "string_util.h"
 	#include "aux/csr_converter.h"
 	#include "storage_formats/matrix_market/matrix_market.h"
-
 #ifdef __cplusplus
 }
 #endif
 
-
 #include "bench_common.h"
 #include "kernel.h"
 
+// Utils macro
+#define Min(x,y) ((x)<(y)?(x):(y))
+#define Max(x,y) ((x)>(y)?(x):(y))
+#define Abs(x) ((x)>(0)?(x):-(x))
+
+void CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val, INT_T m, INT_T n, INT_T k, ValueType * x, ValueType * y)
+{
+	__attribute__((unused)) ValueType epsilon_relaxed = 1e-4;
+	#if DOUBLE == 0
+		ValueType epsilon = 1e-5;
+	#elif DOUBLE == 1
+		ValueType epsilon = 1e-10;
+	#endif
+	long i;
+	ValueType * y_gold = (typeof(y_gold)) malloc(m * k * sizeof(*y_gold));
+	ValueType * y_test = (typeof(y_test)) malloc(m * k * sizeof(*y_test));
+	#pragma omp parallel
+	{
+		ValueType sum;
+		long i, j;
+		#pragma omp for
+		for(i=0;i<m * k;i++)
+		{
+			y_gold[i] = 0;
+			y_test[i] = y[i];
+		}
+		#pragma omp for
+		for (i = 0; i < m; i++) {
+			for (long c = 0; c < k; c++) {
+				ValueType value, tmp, compensation;
+				compensation = 0;
+				sum = 0;
+				for (j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
+					value = val[j] * x[c * n + col_idx[j]] - compensation;
+					tmp = sum + value;
+					compensation = (tmp - sum) - value;
+					sum = tmp;
+				}
+				y_gold[i * k + c] = sum;
+			}
+		}
+	}
+
+	ValueType maxDiff = 0, diff;
+	for(i=0;i<m * k;i++)
+	{
+		diff = Abs(y_gold[i] - y_test[i]);
+		if (y_gold[i] > epsilon)
+		{
+			diff = diff / abs(y_gold[i]);
+			maxDiff = Max(maxDiff, diff);
+		}
+	}
+	if(maxDiff > epsilon)
+		printf("Test failed! (%g)\n", (double)maxDiff);
+
+	free(y_gold);
+	free(y_test);
+}
 
 int main(int argc, char **argv)
 {
@@ -125,13 +182,24 @@ int main(int argc, char **argv)
 		printf("]\n");
 	}
 	printf("---\n");
+	CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, k, x, y);
 
-	// if GPU, need to run 1000 iterations more
-	for(int i=0; i<1000; i++) MF->spmm(x, y, k);
+	// if GPU, need to run 1000 iterations more for warmup
+	int gpu_kernel = 0;
+	const char* env_gpu_kernel = getenv("GPU_KERNEL");
+	if (env_gpu_kernel != NULL) {
+		gpu_kernel = atoi(env_gpu_kernel);
+	} else {
+		// handle the case where the environment variable is not set
+		fprintf(stderr, "Environment variable GPU_KERNEL not set.\n");
+		exit(EXIT_FAILURE);
+	}
+	if(gpu_kernel)
+		for(int i=0; i<1000; i++)
+			MF->spmm(x, y, k);
 
 	time = 0;
 	iterations = 128;
-	// iterations = 1;
 	for(int i=0; i<iterations; i++){
 		time += time_it(1, 
 			MF->spmm(x, y, k);

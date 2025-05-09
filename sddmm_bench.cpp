@@ -11,15 +11,80 @@ extern "C"{
 	#include "string_util.h"
 	#include "aux/csr_converter.h"
 	#include "storage_formats/matrix_market/matrix_market.h"
-
 #ifdef __cplusplus
 }
 #endif
 
-
 #include "bench_common.h"
 #include "kernel.h"
 
+// Utils macro
+#define Min(x,y) ((x)<(y)?(x):(y))
+#define Max(x,y) ((x)>(y)?(x):(y))
+#define Abs(x) ((x)>(0)?(x):-(x))
+
+void CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val,
+	INT_T csr_m, INT_T csr_n, INT_T csr_nnz, 
+	INT_T dense_k,
+	ValueType * x, ValueType * y, ValueType * out)
+{
+	__attribute__((unused)) ValueType epsilon_relaxed = 1e-4;
+	#if DOUBLE == 0
+		ValueType epsilon = 1e-5;
+	#elif DOUBLE == 1
+		ValueType epsilon = 1e-10;
+	#endif
+	// long i;
+	ValueType * out_gold = (typeof(out_gold)) malloc(csr_nnz * sizeof(*out_gold));
+	ValueType * out_test = (typeof(out_test)) malloc(csr_nnz * sizeof(*out_test));
+	// #pragma omp parallel
+	// {
+		ValueType sum;
+		long i, j;
+
+		#pragma omp parallel for
+		for(i=0;i<csr_nnz;i++)
+		{
+			out_gold[i] = 0;
+			out_test[i] = out[i];
+		}
+
+		// #pragma omp for
+		for (i = 0; i < csr_m; i++) {
+			for (j = row_ptr[i]; j < row_ptr[i+1]; j++) {
+				ValueType value, tmp, compensation;
+				compensation = 0;
+				sum = 0.0f;
+				long curr_col = col_idx[j];
+				for(long k = 0; k < dense_k; k++) {
+					// value = val[j] * x[i*dense_k + k] * y[k*csr_n + curr_col] - compensation;
+					// this would also be acceptable, since the values of sparse matrix are all set to 1 for SDDMM.
+					value = x[i*dense_k + k] * y[k*csr_n + curr_col] - compensation;
+					tmp = sum + value;
+					compensation = (tmp - sum) - value;
+					sum = tmp;
+				}
+				out_gold[j] = sum;
+			}
+		}
+	// }
+
+	ValueType maxDiff = 0, diff;
+	for(i=0;i<csr_nnz;i++)
+	{
+		diff = Abs(out_gold[i] - out_test[i]);
+		if (out_gold[i] > epsilon)
+		{ 
+			diff = diff / abs(out_gold[i]);
+			maxDiff = Max(maxDiff, diff);
+		}
+	}
+	if(maxDiff > epsilon)
+		printf("Test failed! (%g)\n", (double)maxDiff);
+
+	free(out_gold);
+	free(out_test);
+}
 
 int main(int argc, char **argv)
 {
@@ -100,6 +165,10 @@ int main(int argc, char **argv)
 	);
 	printf("time coo to csr: %lf\n", time);
 
+	_Pragma("omp parallel for")
+	for (long i=0;i<coo_nnz;i++)
+		csr_a[i] = 1.0;
+
 	time = time_it(1,
 		MF = csr_to_format(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz);
 	);
@@ -120,17 +189,27 @@ int main(int argc, char **argv)
 
 	// warmup iteration
 	MF->sddmm(x, y, out, k);
-	printf("---\nval_out = [ ");
-	for(int i=0; i<100; i++)
-		printf("%lf ", out[i]);
+	printf("---\nout = [ ");
+	for(int i=0; i<100; i++) printf("%lf ", out[i]);
 	printf("]\n---\n");
+	CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k, x, y, out);
 
-	// if GPU, need to run 1000 iterations more
-	for(int i=0; i<1000; i++) MF->sddmm(x, y, out, k);
+	// if GPU, need to run 1000 iterations more for warmup
+	int gpu_kernel = 0;
+	const char* env_gpu_kernel = getenv("GPU_KERNEL");
+	if (env_gpu_kernel != NULL) {
+		gpu_kernel = atoi(env_gpu_kernel);
+	} else {
+		// handle the case where the environment variable is not set
+		fprintf(stderr, "Environment variable GPU_KERNEL not set.\n");
+		exit(EXIT_FAILURE);
+	}
+	if(gpu_kernel)
+		for(int i=0; i<1000; i++)
+			MF->sddmm(x, y, out, k);
 
 	time = 0;
 	iterations = 128;
-	// iterations = 1;
 	for(int i=0; i<iterations; i++){
 		time += time_it(1, 
 			MF->sddmm(x, y, out, k);
@@ -144,6 +223,7 @@ int main(int argc, char **argv)
 	free(csr_a);
 	free(csr_ia);
 	free(csr_ja);
+	free(out);
 
 	return 0;
 }

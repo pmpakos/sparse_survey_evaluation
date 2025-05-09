@@ -74,7 +74,7 @@ struct CSRArrays : Matrix_Format
 		double time = time_it(1,
 			aspt_preprocess_cpu(row_ptr0, col_idx0, val0, ja_aspt, a_aspt, n, nnz, nr, npanel, &avg, &vari, special, special2, &special_p, mcsr_e, mcsr_cnt, mcsr_chk);
 		);
-		printf("time aspt_sddmm_preprocess = %lf\n", time);
+		// printf("time aspt_preprocess = %lf\n", time);
 
 		free(row_ptr0);
 		free(col_idx0);

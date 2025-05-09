@@ -4,7 +4,8 @@ EXE  =
 # EXE += spmm_cusparse.exe sddmm_cusparse.exe 
 # EXE += spmm_acc.exe
 # EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
-EXE += spmm_rode.exe sddmm_rode.exe
+# EXE += spmm_rode.exe sddmm_rode.exe
+EXE += spmm_hc.exe
 
 # CPU
 # EXE += spmm_mkl.exe
@@ -133,7 +134,7 @@ DTC_PATH=$(SPARSE_SURVEY_ROOT)/DTC-SpMM
 HC_PATH=$(SPARSE_SURVEY_ROOT)/HC-SpMM
 GNNPILOT_PATH=$(SPARSE_SURVEY_ROOT)/GNNPilot
 
-TORCH_HOME=$(SPARSE_SURVEY_ROOT)/libtorch_cuda
+TORCH_HOME=$(SPARSE_SURVEY_ROOT)/libtorch
 PYTHON_HOME=/various/pmpakos/python-3.9.7
 
 PYTORCH_INC = 
@@ -241,6 +242,11 @@ spmm_rode.exe: obj/spmm_bench.o kernel_rode.cu $(LIB_OBJ)
 sddmm_rode.exe: obj/sddmm_bench.o kernel_rode.cu $(LIB_OBJ)
 	cd $(RODE_PATH)/sddmm; make clean; make -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(RODE_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/sddmm' -lrode_sddmm
+
+spmm_hc.exe: obj/spmm_bench.o kernel_hc.cu $(LIB_OBJ)
+# 	cd $(HC_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) -j; cd -
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(HC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(HC_PATH)' -lhc_spmm $(PYTORCH_LIBS)
+
 ########## CPU ##########
 
 # mat_mkl_spmv.exe: mat_mkl_spmv.cpp $(LIB_OBJ)
@@ -254,7 +260,6 @@ spmm_aspt_cpu.exe: obj/spmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
 sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
 	cd $(ASPT_PATH)/cpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
 	$(CPP) $(CFLAGS) -D'SDDMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/sddmm' -laspt_sddmm
-
 
 # mat_aocl_spmv.exe: mat_aocl_spmv.cpp $(LIB_OBJ)
 # 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL5) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL5)
@@ -272,6 +277,7 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null 2>&1; cd -;
 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
 
+
 # mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
 # mat_dgsparse_spmm.exe: mat_dgsparse_spmm.cpp $(LIB_OBJ)
@@ -280,7 +286,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 # mat_dgsparse_sddmm.exe: mat_dgsparse_sddmm.cpp $(LIB_OBJ)
 # 	cd $(DGSPARSE_PATH)/sddmm; make clean; make -j; cd -
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(DGSPARSE_PATH)/sddmm'" $^ -o $@ $(LDFLAGS) -L'$(DGSPARSE_PATH)/sddmm' -lsddmm
-
 
 # mat_sputnik_spmm.exe: mat_sputnik_spmm.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
@@ -298,11 +303,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 # # mat_dtc_v3_spmm.exe: mat_dtc_v3_spmm.cu $(LIB_OBJ)
 # # 	cd $(DTC_PATH); make clean; make -j; cd -
 # # 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
-
-# mat_hc_spmm.exe: mat_hc_spmm.cu $(LIB_OBJ)
-# 	cd $(HC_PATH); make clean; make -j; cd -
-# 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(HC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(HC_PATH)' -lhc_spmm $(PYTORCH_LIBS)
-
 
 # mat_gnnpilot_spmm.exe: mat_gnnpilot_spmm.cu $(LIB_OBJ)
 # 	cd $(GNNPILOT_PATH); make clean; make -j; cd -

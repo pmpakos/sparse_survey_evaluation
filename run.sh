@@ -88,8 +88,9 @@ do
     # ./sddmm_cusparse.exe ${path_validation}/$a 128
     # ./spmm_aspt_gpu.exe ${path_validation}/$a 128
     # ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
-    ./spmm_rode.exe ${path_validation}/$a 128
+    # ./spmm_rode.exe ${path_validation}/$a 128
     # ./sddmm_rode.exe ${path_validation}/$a 128
+    ./spmm_hc.exe ${path_validation}/$a 128
 done
 
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable

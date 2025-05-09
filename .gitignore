@@ -3,3 +3,4 @@
 *.a
 *.exe
 obj/
+deps/libtorch

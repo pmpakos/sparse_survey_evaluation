@@ -1,31 +1,24 @@
 
 EXE  = 
 # GPU
-# EXE += spmm_cusparse.exe sddmm_cusparse.exe 
-# EXE += spmm_acc.exe
-# EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
-# EXE += spmm_rode.exe sddmm_rode.exe
+EXE += spmm_cusparse.exe sddmm_cusparse.exe
+EXE += spmm_acc.exe
+EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+EXE += spmm_rode.exe sddmm_rode.exe
 EXE += spmm_hc.exe
+EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
+EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
 
 # CPU
-# EXE += spmm_mkl.exe
-# EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-# EXE += spmm_aocl.exe
-# EXE += spmm_fusedmm.exe
+EXE += spmm_mkl.exe
+EXE += spmm_aocl.exe
+EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+EXE += spmm_fusedmm.exe
 
-# EXE += mat_dgsparse_spmm.exe mat_dgsparse_sddmm.exe 
-# EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
-# EXE += mat_aspt_spmm.exe mat_aspt_sddmm.exe
-# EXE += mat_aspt_spmm_cpu.exe mat_aspt_sddmm_cpu.exe
-# EXE += mat_aocl_spmv.exe mat_aocl_spmm.exe mat_aocl_spmv3.exe mat_aocl_spmv4.exe 
-# EXE += mat_fused_spmm.exe
-# EXE += mat_rode_spmm.exe mat_rode_sddmm.exe
-# EXE += mat_octet_spmm.exe
+# EXE += mat_gnnpilot_spmm.exe mat_gnnpilot_sddmm.exe
 
 # EXE += mat_dtc_v1_spmm.exe mat_dtc_v2_spmm.exe # mat_dtc_v3_spmm.exe
-# EXE += mat_hc_spmm.exe
-# EXE += mat_gnnpilot_spmm.exe
-# EXE += mat_gnnpilot_spmm.exe mat_gnnpilot_sddmm.exe
+# EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
 
 
 #####################################################################################################
@@ -226,26 +219,48 @@ sddmm_cusparse.exe: obj/sddmm_bench.o kernel_cusparse.cu $(LIB_OBJ)
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
 
 spmm_acc.exe: obj/spmm_bench.o kernel_acc.cu $(LIB_OBJ)
-	cd $(ACC_PATH); make clean; make -j; cd -
+	cd $(ACC_PATH); make clean; make CPP=$(CPP) -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(ACC_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(ACC_PATH)' -lacc_spmm
 
 spmm_aspt_gpu.exe: obj/spmm_bench.o kernel_aspt_gpu.cu $(LIB_OBJ)
-	cd $(ASPT_PATH)/gpu/spmm; make clean; make DOUBLE=$(DOUBLE) -j; cd -
+	cd $(ASPT_PATH)/gpu/spmm; make clean; make DOUBLE=$(DOUBLE) CPP=$(CPP) -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -I'$(ASPT_PATH)/gpu'" $^ -o $@ $(LDFLAGS) -L'$(ASPT_PATH)/gpu/spmm' -laspt_spmm
 sddmm_aspt_gpu.exe: obj/sddmm_bench.o kernel_aspt_gpu.cu $(LIB_OBJ)
-	cd $(ASPT_PATH)/gpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
+	cd $(ASPT_PATH)/gpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) CPP=$(CPP) -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(ASPT_PATH)/gpu'" $^ -o $@ $(LDFLAGS) -L'$(ASPT_PATH)/gpu/sddmm/' -laspt_sddmm
 
 spmm_rode.exe: obj/spmm_bench.o kernel_rode.cu $(LIB_OBJ)
-	cd $(RODE_PATH)/spmm; make clean; make -j; cd -
+	cd $(RODE_PATH)/spmm; make clean; make CPP=$(CPP) -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -I'$(RODE_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/spmm' -lrode_spmm
 sddmm_rode.exe: obj/sddmm_bench.o kernel_rode.cu $(LIB_OBJ)
-	cd $(RODE_PATH)/sddmm; make clean; make -j; cd -
+	cd $(RODE_PATH)/sddmm; make clean; make CPP=$(CPP) -j; cd -
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(RODE_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/sddmm' -lrode_sddmm
 
 spmm_hc.exe: obj/spmm_bench.o kernel_hc.cu $(LIB_OBJ)
-# 	cd $(HC_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) -j; cd -
+	cd $(HC_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(HC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(HC_PATH)' -lhc_spmm $(PYTORCH_LIBS)
+
+# mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
+# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
+spmm_dgsparse.exe: obj/spmm_bench.o kernel_dgsparse.cu $(LIB_OBJ)
+	cd $(DGSPARSE_PATH)/ge-spmm; make clean; make CPP=$(CPP) -j; cd -
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -D'SPMM_METHOD=0' -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o spmm_dgsparse_0.exe $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -D'SPMM_METHOD=1' -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o spmm_dgsparse_1.exe $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -D'SPMM_METHOD=2' -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o spmm_dgsparse_2.exe $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -D'SPMM_METHOD=3' -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o spmm_dgsparse_3.exe $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -D'SPMM_METHOD=4' -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o spmm_dgsparse_4.exe $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -D'SPMM_METHOD=5' -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o spmm_dgsparse_5.exe $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
+sddmm_dgsparse.exe: obj/sddmm_bench.o kernel_dgsparse.cu $(LIB_OBJ)
+	cd $(DGSPARSE_PATH)/sddmm; make clean; make CPP=$(CPP) -j; cd -
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(DGSPARSE_PATH)/sddmm'" $^ -o $@ $(LDFLAGS) -L'$(DGSPARSE_PATH)/sddmm' -lsddmm
+
+spmm_gnnpilot.exe: obj/spmm_bench.o kernel_gnnpilot.cu $(LIB_OBJ)
+	cd $(GNNPILOT_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'BALANCE=1' -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o spmm_gnnpilot_1.exe $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'BALANCE=2' -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o spmm_gnnpilot_2.exe $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
+sddmm_gnnpilot.exe: obj/sddmm_bench.o kernel_gnnpilot.cu $(LIB_OBJ)
+	cd $(GNNPILOT_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 
 ########## CPU ##########
 
@@ -253,13 +268,6 @@ spmm_hc.exe: obj/spmm_bench.o kernel_hc.cu $(LIB_OBJ)
 # 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
 spmm_mkl.exe: obj/spmm_bench.o kernel_mkl.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
-
-spmm_aspt_cpu.exe: obj/spmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
-	cd $(ASPT_PATH)/cpu/spmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
-	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/spmm' -laspt_spmm
-sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
-	cd $(ASPT_PATH)/cpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) -j; cd -
-	$(CPP) $(CFLAGS) -D'SDDMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/sddmm' -laspt_sddmm
 
 # mat_aocl_spmv.exe: mat_aocl_spmv.cpp $(LIB_OBJ)
 # 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL5) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL5)
@@ -270,6 +278,13 @@ sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
 spmm_aocl.exe: obj/spmm_bench.o kernel_aocl.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) $(CPPFLAGS_AOCL5) $^ -o $@ $(LDFLAGS) $(LDFLAGS_AOCL5)
 
+spmm_aspt_cpu.exe: obj/spmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
+	cd $(ASPT_PATH)/cpu/spmm/; make clean; make DOUBLE=$(DOUBLE) CPP=$(CPP) -j; cd -
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/spmm' -laspt_spmm
+sddmm_aspt_cpu.exe: obj/sddmm_bench.o kernel_aspt_cpu.cpp $(LIB_OBJ)
+	cd $(ASPT_PATH)/cpu/sddmm/; make clean; make DOUBLE=$(DOUBLE) CPP=$(CPP) -j; cd -
+	$(CPP) $(CFLAGS) -D'SDDMM_KERNEL' $^ -o $@ -I'$(ASPT_PATH)/cpu' $(LDFLAGS) -L'$(ASPT_PATH)/cpu/sddmm' -laspt_sddmm
+
 # mat_fused_sddmm.exe: mat_fused_sddmm.cpp $(LIB_OBJ)
 # 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null; cd -;
 # 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
@@ -277,15 +292,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null 2>&1; cd -;
 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
 
-
-# mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS)" $^ -o $@ $(LDFLAGS) $(LDFLAGS_CUSPARSE)
-# mat_dgsparse_spmm.exe: mat_dgsparse_spmm.cpp $(LIB_OBJ)
-# 	cd $(DGSPARSE_PATH)/ge-spmm; make clean; make -j; cd -
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(DGSPARSE_PATH)/ge-spmm'" $^ -o $@ $(LDFLAGS) -L'$(DGSPARSE_PATH)/ge-spmm' -lgespmm
-# mat_dgsparse_sddmm.exe: mat_dgsparse_sddmm.cpp $(LIB_OBJ)
-# 	cd $(DGSPARSE_PATH)/sddmm; make clean; make -j; cd -
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(DGSPARSE_PATH)/sddmm'" $^ -o $@ $(LDFLAGS) -L'$(DGSPARSE_PATH)/sddmm' -lsddmm
 
 # mat_sputnik_spmm.exe: mat_sputnik_spmm.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
@@ -304,25 +310,15 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 # # 	cd $(DTC_PATH); make clean; make -j; cd -
 # # 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
 
-# mat_gnnpilot_spmm.exe: mat_gnnpilot_spmm.cu $(LIB_OBJ)
-# 	cd $(GNNPILOT_PATH); make clean; make -j; cd -
-# 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
-# mat_gnnpilot_sddmm.exe: mat_gnnpilot_sddmm.cu $(LIB_OBJ)
-# 	cd $(GNNPILOT_PATH); make clean; make -j; cd -
-# 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 
 
-# ########## CPU ##########
-
-# #########################
+#########################
 
 $(call Rule_Auto_Dependencies,obj/spmm_bench.o,spmm_bench.cpp,$(CFLAGS))
 	$(CPP) $(CFLAGS) -c $< -o $@
 $(call Rule_Auto_Dependencies,obj/sddmm_bench.o,sddmm_bench.cpp,$(CFLAGS))
 	$(CPP) $(CFLAGS) -c $< -o $@
 
-# $(call Rule_Auto_Dependencies,obj/read_mtx.o,read_mtx.cpp,$(CFLAGS))
-# 	$(CPP) $(CFLAGS) -c $< -o $@
 $(call Rule_Auto_Dependencies,obj/pthread_functions.o,$(library)/pthread_functions.c,$(CFLAGS))
 	$(CC) $(CFLAGS) -c $< -o $@
 $(call Rule_Auto_Dependencies,obj/omp_functions.o,$(library)/omp_functions.c,$(CFLAGS))

@@ -84,13 +84,24 @@ for a in "${matrices[@]}"
 do
     echo '--------'
     echo ${path_validation}/$a
-    # ./spmm_cusparse.exe ${path_validation}/$a 128
-    # ./sddmm_cusparse.exe ${path_validation}/$a 128
-    # ./spmm_aspt_gpu.exe ${path_validation}/$a 128
-    # ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
-    # ./spmm_rode.exe ${path_validation}/$a 128
-    # ./sddmm_rode.exe ${path_validation}/$a 128
+    ./spmm_cusparse.exe ${path_validation}/$a 128
+    ./sddmm_cusparse.exe ${path_validation}/$a 128
+    ./spmm_acc.exe ${path_validation}/$a 128
+    ./spmm_aspt_gpu.exe ${path_validation}/$a 128
+    ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
+    ./spmm_rode.exe ${path_validation}/$a 128
+    ./sddmm_rode.exe ${path_validation}/$a 128
     ./spmm_hc.exe ${path_validation}/$a 128
+    ./spmm_dgsparse_0.exe ${path_validation}/$a 128 # GESPMM_ALG_SEQREDUCE_ROWBALANCE
+    ./spmm_dgsparse_1.exe ${path_validation}/$a 128 # GESPMM_ALG_PARREDUCE_ROWBALANCE
+    ./spmm_dgsparse_2.exe ${path_validation}/$a 128 # GESPMM_ALG_SEQREDUCE_NNZBALANCE
+    ./spmm_dgsparse_3.exe ${path_validation}/$a 128 # GESPMM_ALG_PARREDUCE_NNZBALANCE
+    ./spmm_dgsparse_4.exe ${path_validation}/$a 128 # GESPMM_ALG_ROWCACHING_ROWBALANCE
+    ./spmm_dgsparse_5.exe ${path_validation}/$a 128 # GESPMM_ALG_ROWCACHING_NNZBALANCE
+    ./sddmm_dgsparse.exe ${path_validation}/$a 128
+    ./spmm_gnnpilot_1.exe ${path_validation}/$a 128 # BALANCE=1
+    ./spmm_gnnpilot_2.exe ${path_validation}/$a 128 # BALANCE=2
+    ./sddmm_gnnpilot.exe ${path_validation}/$a 128
 done
 
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
@@ -99,12 +110,11 @@ for a in "${matrices[@]}"
 do
     echo '--------'
     echo ${path_validation}/$a
-    # ./spmm_mkl.exe ${path_validation}/$a 128
-    # ./spmm_acc.exe ${path_validation}/$a 128
-    # ./spmm_aspt_cpu.exe ${path_validation}/$a 128
-    # ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
-    # ./spmm_aocl.exe ${path_validation}/$a 128
-    # ./spmm_fusedmm.exe ${path_validation}/$a 128
+    ./spmm_mkl.exe ${path_validation}/$a 128
+    ./spmm_aocl.exe ${path_validation}/$a 128
+    ./spmm_aspt_cpu.exe ${path_validation}/$a 128
+    ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
+    ./spmm_fusedmm.exe ${path_validation}/$a 128
 done
 
 # for a in "${matrices[@]}"
@@ -120,9 +130,9 @@ done
     # do
     #     ./mat_cusparse_spmm.exe ${path_validation}/$a ${k}
     # done
-    # for middle in 16;
+    # for k in 16;
     # do
-    #     ./mat_cusparse_sddmm.exe ${path_validation}/$a ${middle}
+    #     ./mat_cusparse_sddmm.exe ${path_validation}/$a ${k}
     # done
 
     # ACC
@@ -136,10 +146,59 @@ done
     # do
     #     ./mat_aspt_spmm.exe ${path_validation}/$a ${k}
     # done
-    # for middle in 16;
+    # for k in 16;
     # do
-    #     ./mat_aspt_sddmm.exe ${path_validation}/$a ${middle}
+    #     ./mat_aspt_sddmm.exe ${path_validation}/$a ${k}
     # done
+    
+    # RoDe
+    # for k in 128;
+    # do
+    #     ./mat_rode_spmm.exe ${path_validation}/$a ${k}
+    # done
+    # for k in 128;
+    # do
+    #     ./mat_rode_sddmm.exe ${path_validation}/$a ${k}
+    # done
+
+    # HC-SpMM (works for >128 only)
+    # for k in 128;
+    # do
+    #     ./mat_hc_spmm.exe ${path_validation}/$a ${k}
+    # done
+
+    # dgSPARSE
+    # for k in 128;
+    # do
+    #     # 0: GESPMM_ALG_SEQREDUCE_ROWBALANCE
+    #     # 1: GESPMM_ALG_PARREDUCE_ROWBALANCE
+    #     # 2: GESPMM_ALG_SEQREDUCE_NNZBALANCE
+    #     # 3: GESPMM_ALG_PARREDUCE_NNZBALANCE
+    #     # 4: GESPMM_ALG_ROWCACHING_ROWBALANCE
+    #     # 5: GESPMM_ALG_ROWCACHING_NNZBALANCE
+    #     for method in 0 1 2 3 4 5;
+    #     do
+    #         ./mat_dgsparse_spmm.exe ${path_validation}/$a ${k} ${method}
+    #     done
+    # done
+    # # for k in 16 64 256;
+    # for k in 16;
+    # do
+    #     ./mat_dgsparse_sddmm.exe ${path_validation}/$a ${k}
+    # done
+
+    # GNN-Pilot
+    # for k in 128;
+    # do
+    #     ./mat_gnnpilot_spmm.exe ${path_validation}/$a ${k} 1
+    #     ./mat_gnnpilot_spmm.exe ${path_validation}/$a ${k} 2
+    # done
+    # for k in 128;
+    # do
+    #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${k} 1
+    #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${k} 2
+    # done
+
     ####################### CPU #######################
     
     # MKL
@@ -169,9 +228,9 @@ done
     # do
     #     ./mat_aspt_spmm_cpu.exe ${path_validation}/$a ${k}
     # done
-    # for middle in 16;
+    # for k in 16;
     # do
-    #     ./mat_aspt_sddmm_cpu.exe ${path_validation}/$a ${middle}
+    #     ./mat_aspt_sddmm_cpu.exe ${path_validation}/$a ${k}
     # done
 
     # FusedMM
@@ -182,44 +241,14 @@ done
 
     ####################################################
 
-    # dgSPARSE
-    # for k in 128;
-    # do
-    #     # 0: GESPMM_ALG_SEQREDUCE_ROWBALANCE
-    #     # 1: GESPMM_ALG_PARREDUCE_ROWBALANCE
-    #     # 2: GESPMM_ALG_SEQREDUCE_NNZBALANCE
-    #     # 3: GESPMM_ALG_PARREDUCE_NNZBALANCE
-    #     # 4: GESPMM_ALG_ROWCACHING_ROWBALANCE
-    #     # 5: GESPMM_ALG_ROWCACHING_NNZBALANCE
-    #     for method in 0 1 2 3 4 5;
-    #     do
-    #         ./mat_dgsparse_spmm.exe ${path_validation}/$a ${k} ${method}
-    #     done
-    # done
-    # # for middle in 16 64 256;
-    # for middle in 16;
-    # do
-    #     ./mat_dgsparse_sddmm.exe ${path_validation}/$a ${middle}
-    # done
-
     # SPUTNIK
     # for k in 128;
     # do
     #     ./mat_sputnik_spmm.exe ${path_validation}/$a ${k}
     # done
-    # for middle in 16;
+    # for k in 16;
     # do
-    #     ./mat_sputnik_sddmm.exe ${path_validation}/$a ${middle}
-    # done
-
-    # RoDe
-    # for k in 128;
-    # do
-    #     ./mat_rode_spmm.exe ${path_validation}/$a ${k}
-    # done
-    # for middle in 128;
-    # do
-    #     ./mat_rode_sddmm.exe ${path_validation}/$a ${middle}
+    #     ./mat_sputnik_sddmm.exe ${path_validation}/$a ${k}
     # done
 
     # DTC-v1 ("float_nonsplit", "float2_nonsplit", "float2_split", "float4_nonsplit", "float4_split")
@@ -237,23 +266,5 @@ done
     #     do
     #         ./mat_dtc_v2_spmm.exe ${path_validation}/$a ${k} ${exeplan}
     #     done
-    # done
-
-    # HC-SpMM (works for >128 only)
-    # for k in 128;
-    # do
-    #     ./mat_hc_spmm.exe ${path_validation}/$a ${k}
-    # done
-
-    # GNN-Pilot
-    # for k in 128;
-    # do
-    #     ./mat_gnnpilot_spmm.exe ${path_validation}/$a ${k} 1
-    #     ./mat_gnnpilot_spmm.exe ${path_validation}/$a ${k} 2
-    # done
-    # for middle in 128;
-    # do
-    #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 1
-    #     ./mat_gnnpilot_sddmm.exe ${path_validation}/$a ${middle} 2
     # done
 # done

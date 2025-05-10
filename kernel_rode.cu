@@ -233,7 +233,6 @@ compute_sddmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * rest
 
 		// Also, prepare for the output values
 		gpuCudaErrorCheck(cudaMalloc((void**)&csr->out_d, csr->nnz * sizeof(*csr->out_d)));
-
 	}
 
 	#ifdef SDDMM_KERNEL

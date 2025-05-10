@@ -1,20 +1,9 @@
-#compilers
-CUDA_HOME=/usr/local/cuda
-
-# COMPILER_PREFIX=/usr/bin
-COMPILER_PREFIX=/various/dgal/gcc/gcc-12.2.0/gcc_bin/bin
-
-CC = $(COMPILER_PREFIX)/g++
-
 TARGET = libaspt_spmm.a
 
 SRCS = $(wildcard *.cu) $(wildcard *.cc)
 OBJS = $(patsubst %cu, %cu.o, $(SRCS)) $(patsubst %cc, %cc.o, $(SRCS))
 
-CC_FLAGS = 
-CC_FLAGS += -O3 -Wall -std=c++17 -fPIC
-CC_FLAGS += -DDOUBLE=$(DOUBLE)
-
+CUDA_HOME=/usr/local/cuda
 NVCC = $(CUDA_HOME)/bin/nvcc
 
 NVCC_FLAGS = 
@@ -28,20 +17,21 @@ NVCC_FLAGS += -gencode arch=compute_80,code=sm_80
 NVCC_FLAGS += -diag-suppress=191,177
 NVCC_FLAGS += -DDOUBLE=$(DOUBLE)
 
+CC_FLAGS = -O3 -Wall -std=c++17 -fPIC -DDOUBLE=$(DOUBLE)
+
 INC = -I$(CUDA_HOME)/include
 
 all: $(TARGET)
 
-$(TARGET) : $(OBJS)
-	ar cr $@ *.o
+$(TARGET): $(OBJS)
+	ar cr $@ $^
 	ranlib $@
 
 %.cu.o: %.cu
 	$(NVCC) $(NVCC_FLAGS) $(INC) -c $< -o $@
 
 %.cc.o: %.cc
-	$(CC) $(CC_FLAGS) $(INC) -c $< -o $@
+	$(CPP) $(CC_FLAGS) $(INC) -c $< -o $@
 
 clean:
-	rm -rf $(TARGET)
-	rm -rf *.o
+	rm -f *.o $(TARGET)

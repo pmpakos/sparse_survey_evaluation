@@ -66,21 +66,21 @@ struct CSRArrays : Matrix_Format
 	{
 		// gpuCudaErrorCheck(cudaMalloc((void**)&ia_d, (m+1) * sizeof(*ia_d)));
 		// gpuCudaErrorCheck(cudaMalloc((void**)&ja_d, nnz * sizeof(*ja_d)));
-		// gpuCudaErrorCheck(cudaMalloc((void**)&a_d, nnz * sizeof(*a_d)));
+		gpuCudaErrorCheck(cudaMalloc((void**)&a_d, nnz * sizeof(*a_d)));
 
 		gpuCudaErrorCheck(cudaStreamCreate(&stream));
 
 		// gpuCudaErrorCheck(cudaMallocHost((void**)&ia_h, (m+1) * sizeof(*ia_h)));
 		// gpuCudaErrorCheck(cudaMallocHost((void**)&ja_h, nnz * sizeof(*ja_h)));
-		// gpuCudaErrorCheck(cudaMallocHost((void**)&a_h, nnz * sizeof(*a_h)));
+		gpuCudaErrorCheck(cudaMallocHost((void**)&a_h, nnz * sizeof(*a_h)));
 
 		// memcpy(ia_h, ia, (m+1) * sizeof(*ia_h));
 		// memcpy(ja_h, ja, nnz * sizeof(*ja_h));
-		// memcpy(a_h, a, nnz * sizeof(*a_h));
+		memcpy(a_h, a, nnz * sizeof(*a_h));
 
 		// gpuCudaErrorCheck(cudaMemcpyAsync(ia_d, ia_h, (m+1) * sizeof(*ia_d), cudaMemcpyHostToDevice, stream));
 		// gpuCudaErrorCheck(cudaMemcpyAsync(ja_d, ja_h, nnz * sizeof(*ja_d), cudaMemcpyHostToDevice, stream));
-		// gpuCudaErrorCheck(cudaMemcpyAsync(a_d, a_h, nnz * sizeof(*a_d), cudaMemcpyHostToDevice, stream));
+		gpuCudaErrorCheck(cudaMemcpyAsync(a_d, a_h, nnz * sizeof(*a_d), cudaMemcpyHostToDevice, stream));
 
 		// wait for transfers to finish
 		// gpuCudaErrorCheck(cudaStreamSynchronize(stream));
@@ -135,7 +135,7 @@ struct CSRArrays : Matrix_Format
 
 		// gpuCudaErrorCheck(cudaFree(ia_d));
 		// gpuCudaErrorCheck(cudaFree(ja_d));
-		// gpuCudaErrorCheck(cudaFree(a_d));
+		gpuCudaErrorCheck(cudaFree(a_d));
 		gpuCudaErrorCheck(cudaFree(x_d));
 		gpuCudaErrorCheck(cudaFree(y_d));
 		gpuCudaErrorCheck(cudaFree(out_d));
@@ -228,6 +228,7 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 	}
 
 	spmm_forward_cuda_kernel_arbi_warps_hybrid_32<<<csr->grid, csr->block, csr->dynamic_shared_size>>>(csr->nodePointer, csr->edgeList, csr->blockPartition, csr->edgeToColumn, csr->edgeToRow, csr->a_d, csr->num_nodes, csr->num_edges, csr->embedding_dim, csr->x_d, csr->y_d, csr->hybrid_type, csr->row_nzr, csr->col_nzr);
+
 	gpuCudaErrorCheck(cudaPeekAtLastError());
 	gpuCudaErrorCheck(cudaDeviceSynchronize());
 

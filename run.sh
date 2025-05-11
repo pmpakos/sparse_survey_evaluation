@@ -84,24 +84,31 @@ for a in "${matrices[@]}"
 do
     echo '--------'
     echo ${path_validation}/$a
-    ./spmm_cusparse.exe ${path_validation}/$a 128
-    ./sddmm_cusparse.exe ${path_validation}/$a 128
-    ./spmm_acc.exe ${path_validation}/$a 128
-    ./spmm_aspt_gpu.exe ${path_validation}/$a 128
-    ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
-    ./spmm_rode.exe ${path_validation}/$a 128
-    ./sddmm_rode.exe ${path_validation}/$a 128
-    ./spmm_hc.exe ${path_validation}/$a 128
-    ./spmm_dgsparse_0.exe ${path_validation}/$a 128 # GESPMM_ALG_SEQREDUCE_ROWBALANCE
-    ./spmm_dgsparse_1.exe ${path_validation}/$a 128 # GESPMM_ALG_PARREDUCE_ROWBALANCE
-    ./spmm_dgsparse_2.exe ${path_validation}/$a 128 # GESPMM_ALG_SEQREDUCE_NNZBALANCE
-    ./spmm_dgsparse_3.exe ${path_validation}/$a 128 # GESPMM_ALG_PARREDUCE_NNZBALANCE
-    ./spmm_dgsparse_4.exe ${path_validation}/$a 128 # GESPMM_ALG_ROWCACHING_ROWBALANCE
-    ./spmm_dgsparse_5.exe ${path_validation}/$a 128 # GESPMM_ALG_ROWCACHING_NNZBALANCE
-    ./sddmm_dgsparse.exe ${path_validation}/$a 128
-    ./spmm_gnnpilot_1.exe ${path_validation}/$a 128 # BALANCE=1
-    ./spmm_gnnpilot_2.exe ${path_validation}/$a 128 # BALANCE=2
-    ./sddmm_gnnpilot.exe ${path_validation}/$a 128
+    # ./spmm_cusparse.exe ${path_validation}/$a 128
+    # ./sddmm_cusparse.exe ${path_validation}/$a 128
+    # ./spmm_acc.exe ${path_validation}/$a 128
+    # ./spmm_aspt_gpu.exe ${path_validation}/$a 128
+    # ./sddmm_aspt_gpu.exe ${path_validation}/$a 128
+    # ./spmm_rode.exe ${path_validation}/$a 128
+    # ./sddmm_rode.exe ${path_validation}/$a 128
+    # ./spmm_hc.exe ${path_validation}/$a 128
+    # ./spmm_dgsparse_0.exe ${path_validation}/$a 128 # GESPMM_ALG_SEQREDUCE_ROWBALANCE
+    # ./spmm_dgsparse_1.exe ${path_validation}/$a 128 # GESPMM_ALG_PARREDUCE_ROWBALANCE
+    # ./spmm_dgsparse_2.exe ${path_validation}/$a 128 # GESPMM_ALG_SEQREDUCE_NNZBALANCE
+    # ./spmm_dgsparse_3.exe ${path_validation}/$a 128 # GESPMM_ALG_PARREDUCE_NNZBALANCE
+    # ./spmm_dgsparse_4.exe ${path_validation}/$a 128 # GESPMM_ALG_ROWCACHING_ROWBALANCE
+    # ./spmm_dgsparse_5.exe ${path_validation}/$a 128 # GESPMM_ALG_ROWCACHING_NNZBALANCE
+    # ./sddmm_dgsparse.exe ${path_validation}/$a 128
+    # ./spmm_gnnpilot_1.exe ${path_validation}/$a 128 # BALANCE=1
+    # ./spmm_gnnpilot_2.exe ${path_validation}/$a 128 # BALANCE=2
+    # ./sddmm_gnnpilot.exe ${path_validation}/$a 128
+    ./spmm_dtc_0.exe ${path_validation}/$a 128 # float_nonsplit
+    ./spmm_dtc_1.exe ${path_validation}/$a 128 # float2_nonsplit
+    ./spmm_dtc_2.exe ${path_validation}/$a 128 # float2_split
+    ./spmm_dtc_3.exe ${path_validation}/$a 128 # float4_nonsplit
+    ./spmm_dtc_4.exe ${path_validation}/$a 128 # float4_split
+    ./spmm_dtc_5.exe ${path_validation}/$a 128 # v2 float_nonsplit
+    ./spmm_dtc_6.exe ${path_validation}/$a 128 # v2 float4_split
 done
 
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
@@ -110,11 +117,11 @@ for a in "${matrices[@]}"
 do
     echo '--------'
     echo ${path_validation}/$a
-    ./spmm_mkl.exe ${path_validation}/$a 128
-    ./spmm_aocl.exe ${path_validation}/$a 128
-    ./spmm_aspt_cpu.exe ${path_validation}/$a 128
-    ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
-    ./spmm_fusedmm.exe ${path_validation}/$a 128
+    # ./spmm_mkl.exe ${path_validation}/$a 128
+    # ./spmm_aocl.exe ${path_validation}/$a 128
+    # ./spmm_aspt_cpu.exe ${path_validation}/$a 128
+    # ./sddmm_aspt_cpu.exe ${path_validation}/$a 128
+    # ./spmm_fusedmm.exe ${path_validation}/$a 128
 done
 
 # for a in "${matrices[@]}"
@@ -256,7 +263,7 @@ done
     # do
     #     for exeplan in "float_nonsplit" "float2_nonsplit" "float2_split" "float4_nonsplit" "float4_split";
     #     do
-    #         ./mat_dtc_v1_spmm.exe ${path_validation}/$a ${k} ${exeplan}
+    #         ./mat_dtc_spmm.exe ${path_validation}/$a ${k} ${exeplan}
     #     done
     # done
     # DTC-v2 ("float_nonsplit", "float4_split")

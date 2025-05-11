@@ -1,23 +1,21 @@
 
 EXE  = 
 # GPU
-EXE += spmm_cusparse.exe sddmm_cusparse.exe
-EXE += spmm_acc.exe
-EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
-EXE += spmm_rode.exe sddmm_rode.exe
-EXE += spmm_hc.exe
-EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
-EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
+# EXE += spmm_cusparse.exe sddmm_cusparse.exe
+# EXE += spmm_acc.exe
+# EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+# EXE += spmm_rode.exe sddmm_rode.exe
+# EXE += spmm_hc.exe
+# EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
+# EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
+EXE += spmm_dtc.exe
 
 # CPU
-EXE += spmm_mkl.exe
-EXE += spmm_aocl.exe
-EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-EXE += spmm_fusedmm.exe
+# EXE += spmm_mkl.exe
+# EXE += spmm_aocl.exe
+# EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+# EXE += spmm_fusedmm.exe
 
-# EXE += mat_gnnpilot_spmm.exe mat_gnnpilot_sddmm.exe
-
-# EXE += mat_dtc_v1_spmm.exe mat_dtc_v2_spmm.exe # mat_dtc_v3_spmm.exe
 # EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
 
 
@@ -262,6 +260,16 @@ sddmm_gnnpilot.exe: obj/sddmm_bench.o kernel_gnnpilot.cu $(LIB_OBJ)
 	cd $(GNNPILOT_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 
+spmm_dtc.exe: obj/spmm_bench.o kernel_dtc.cu $(LIB_OBJ)
+	cd $(DTC_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=0' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_0.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=1' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_1.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=2' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_2.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=3' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_3.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=4' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_4.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=5' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_5.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
+	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=6' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_6.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
+
 ########## CPU ##########
 
 # mat_mkl_spmv.exe: mat_mkl_spmv.cpp $(LIB_OBJ)
@@ -297,20 +305,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
 # mat_sputnik_sddmm.exe: mat_sputnik_sddmm.cpp $(LIB_OBJ)
 # 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
-
-# mat_dtc_v1_spmm.exe: mat_dtc_v1_spmm.cu $(LIB_OBJ)
-# 	cd $(DTC_PATH); make clean; make -j; cd -
-# 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
-
-# mat_dtc_v2_spmm.exe: mat_dtc_v2_spmm.cu $(LIB_OBJ)
-# 	cd $(DTC_PATH); make clean; make -j; cd -
-# 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
-
-# # mat_dtc_v3_spmm.exe: mat_dtc_v3_spmm.cu $(LIB_OBJ)
-# # 	cd $(DTC_PATH); make clean; make -j; cd -
-# # 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
-
-
 
 #########################
 

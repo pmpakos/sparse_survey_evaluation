@@ -1,3 +1,6 @@
 [submodule "deps/FusedMM"]
 	path = deps/FusedMM
 	url = https://github.com/HipGraph/FusedMM.git
+[submodule "deps/sputnik"]
+	path = deps/sputnik
+	url = https://github.com/google-research/sputnik.git

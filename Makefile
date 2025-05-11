@@ -8,7 +8,8 @@ EXE  =
 # EXE += spmm_hc.exe
 # EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
 # EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
-EXE += spmm_dtc.exe
+# EXE += spmm_dtc.exe
+EXE += spmm_sputnik.exe sddmm_sputnik.exe
 
 # CPU
 # EXE += spmm_mkl.exe
@@ -16,7 +17,6 @@ EXE += spmm_dtc.exe
 # EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
 # EXE += spmm_fusedmm.exe
 
-# EXE += mat_sputnik_spmm.exe mat_sputnik_sddmm.exe
 
 
 #####################################################################################################
@@ -270,6 +270,11 @@ spmm_dtc.exe: obj/spmm_bench.o kernel_dtc.cu $(LIB_OBJ)
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=5' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_5.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=6' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_6.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS) 
 
+spmm_sputnik.exe: obj/spmm_bench.o kernel_sputnik.cu $(LIB_OBJ)
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SPMM_KERNEL' -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
+sddmm_sputnik.exe: obj/sddmm_bench.o kernel_sputnik.cu $(LIB_OBJ)
+	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
+
 ########## CPU ##########
 
 # mat_mkl_spmv.exe: mat_mkl_spmv.cpp $(LIB_OBJ)
@@ -300,11 +305,6 @@ spmm_fusedmm.exe: obj/spmm_bench.o kernel_fusedmm.cpp $(LIB_OBJ)
 	cd $(FUSED_PATH); make clean; make killlib; make -j > /dev/null 2>&1; cd -;
 	$(CPP) $(CFLAGS) $^ -o $@ -I'$(FUSED_PATH)' $(LDFLAGS) $(FUSED_PATH)/bin/sOptFusedMM_pt.o $(FUSED_PATH)/kernels/lib/slibgfusedMM_pt.a
 
-
-# mat_sputnik_spmm.exe: mat_sputnik_spmm.cpp $(LIB_OBJ)
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
-# mat_sputnik_sddmm.exe: mat_sputnik_sddmm.cpp $(LIB_OBJ)
-# 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -I'$(SPUTNIK_PATH)/include'" $^ -o $@ $(LDFLAGS) -L'$(SPUTNIK_PATH)/lib' -lsputnik
 
 #########################
 

@@ -102,13 +102,15 @@ do
     # ./spmm_gnnpilot_1.exe ${path_validation}/$a 128 # BALANCE=1
     # ./spmm_gnnpilot_2.exe ${path_validation}/$a 128 # BALANCE=2
     # ./sddmm_gnnpilot.exe ${path_validation}/$a 128
-    ./spmm_dtc_0.exe ${path_validation}/$a 128 # float_nonsplit
-    ./spmm_dtc_1.exe ${path_validation}/$a 128 # float2_nonsplit
-    ./spmm_dtc_2.exe ${path_validation}/$a 128 # float2_split
-    ./spmm_dtc_3.exe ${path_validation}/$a 128 # float4_nonsplit
-    ./spmm_dtc_4.exe ${path_validation}/$a 128 # float4_split
-    ./spmm_dtc_5.exe ${path_validation}/$a 128 # v2 float_nonsplit
-    ./spmm_dtc_6.exe ${path_validation}/$a 128 # v2 float4_split
+    # ./spmm_dtc_0.exe ${path_validation}/$a 128 # float_nonsplit
+    # ./spmm_dtc_1.exe ${path_validation}/$a 128 # float2_nonsplit
+    # ./spmm_dtc_2.exe ${path_validation}/$a 128 # float2_split
+    # ./spmm_dtc_3.exe ${path_validation}/$a 128 # float4_nonsplit
+    # ./spmm_dtc_4.exe ${path_validation}/$a 128 # float4_split
+    # ./spmm_dtc_5.exe ${path_validation}/$a 128 # v2 float_nonsplit
+    # ./spmm_dtc_6.exe ${path_validation}/$a 128 # v2 float4_split
+    ./spmm_sputnik.exe ${path_validation}/$a 128
+    ./sddmm_sputnik.exe ${path_validation}/$a 128
 done
 
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable

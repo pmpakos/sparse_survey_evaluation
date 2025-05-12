@@ -36,6 +36,12 @@ Edit the Makefile and the run.sh to build the executables needed for the benchma
 The paths are configured for the epyc5 server (AMD 24-core CPU and NVIDIA A100 GPU).
 
 In the run.sh file, select the matrices you want to run the benchmarks. You can also configure the number of threads for the CPU programs. 
+For every executable, the second input parameter is the dimension k of the dense matrices.
+
+Dimensions of matrices: 
+1. Sparse matrix: `m x n`
+2. SpMM: input dense matrix: `n x k`, output dense matrix: `m x k`
+3. SDDMM: left input dense matrix: `m x k`, right input dense matrix: `k x n`
 
 ```bash
 make clean

@@ -189,9 +189,9 @@ int main(int argc, char **argv)
 
 	// warmup iteration
 	MF->sddmm(x, y, out, k);
-	printf("---\nout = [ ");
-	for(int i=0; i<100; i++) printf("%lf ", out[i]);
-	printf("]\n---\n");
+	// printf("---\nout = [ ");
+	// for(int i=0; i<100; i++) printf("%lf ", out[i]);
+	// printf("]\n---\n");
 	CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k, x, y, out);
 
 	// if GPU, need to run 1000 iterations more for warmup
@@ -216,7 +216,7 @@ int main(int argc, char **argv)
 		);
 	}
 	double gflops = 2.0 * MF->nnz * k * iterations / time / 1e9;
-	printf("SDDMM kernel - matrix: %s, format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->format_name, k, gflops);
+	printf("SDDMM kernel - matrix: %s (%ld rows, %ld nnz), format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->m, MF->nnz, MF->format_name, k, gflops);
 
 	free(x);
 	free(y);

@@ -3,9 +3,6 @@
 cd ./sputnik
 git reset --hard; git clean -fd
 
-# Then, you have to download all necessary submodules (don't know if this is necessary tbh)
-git submodule update --init --recursive
-
 # First, set the PATH variable accordingly to use specific gcc and cmake
 export PATH=/various/dgal/gcc/gcc-12.2.0/gcc_bin/bin:$PATH
 export PATH=/various/pmpakos/epyc5_libs/cmake-3.26.0-rc3/build/bin/:$PATH

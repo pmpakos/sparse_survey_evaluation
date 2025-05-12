@@ -1,27 +1,29 @@
 
 EXE  = 
 # GPU
-# EXE += spmm_cusparse.exe sddmm_cusparse.exe
-# EXE += spmm_acc.exe
-# EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
-# EXE += spmm_rode.exe sddmm_rode.exe
-# EXE += spmm_hc.exe
-# EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
-# EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
-# EXE += spmm_dtc.exe
+EXE += spmm_cusparse.exe sddmm_cusparse.exe
+EXE += spmm_acc.exe
+EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+EXE += spmm_rode.exe sddmm_rode.exe
+EXE += spmm_hc.exe
+EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
+EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
+EXE += spmm_dtc.exe
 EXE += spmm_sputnik.exe sddmm_sputnik.exe
 
 # CPU
-# EXE += spmm_mkl.exe
-# EXE += spmm_aocl.exe
-# EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-# EXE += spmm_fusedmm.exe
-
+EXE += spmm_mkl.exe
+EXE += spmm_aocl.exe
+EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+EXE += spmm_fusedmm.exe
 
 
 #####################################################################################################
+#### No need to edit below this line! ###############################################################
 #####################################################################################################
 #####################################################################################################
+#####################################################################################################
+
 # COMPILER_PREFIX=/usr/bin
 COMPILER_PREFIX=/various/dgal/gcc/gcc-12.2.0/gcc_bin/bin
 

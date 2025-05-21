@@ -423,8 +423,21 @@ GENLIB_cpy(char * restrict src, char * restrict dst, int N)
 	__auto_type ret = OPT_TERNARY((_base),                                                                                           \
 			strtox(buf, &endptr, base),                                                                                      \
 			strtox(buf, &endptr));                                                                                           \
-	if (errno != 0)                                                                                                                  \
-		error(STRING(strtox));                                                                                                   \
+	if (errno == ERANGE) {                                                                                                           \
+		if (__builtin_strcmp(STRING(strtox), "strtof") == 0) {                                                                       \
+			/* Fallback to strtod and cast to float */                                                                               \
+			char *alt_endptr;                                                                                                        \
+			double alt = strtod(buf, &alt_endptr);                                                                                   \
+			if (alt_endptr == buf)                                                                                                   \
+				error("No valid conversion even with fallback in strtod");                                                           \
+			endptr = alt_endptr;                                                                                                     \
+			ret = (typeof(ret))alt;                                                                                                  \
+		} else {                                                                                                                     \
+			error("Conversion out of range in " STRING(strtox));                                                                     \
+		}                                                                                                                            \
+	}                                                                                                                                \
+	if (endptr == buf)                                                                                                               \
+		error("No valid conversion in " STRING(strtox));                                                                             \
 	len = endptr - buf;                                                                                                              \
 	if (len == 0)                                                                                                                    \
 		*len_ptr = 0;                                                                                                            \

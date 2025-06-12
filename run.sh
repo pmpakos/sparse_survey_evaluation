@@ -83,45 +83,6 @@ matrices=(
 make clean;
 time make -j
 
-# For GPU kernels, we need to run 1000 extra iterations for warmup.
-export GPU_KERNEL=1
-echo "GPU kernels"
-for k in 128;
-do
-    for a in "${matrices[@]}"
-    do
-        echo '--------'
-        echo ${path_validation}/$a
-        ./spmm_cusparse.exe ${path_validation}/$a $k
-        ./sddmm_cusparse.exe ${path_validation}/$a $k
-        ./spmm_acc.exe ${path_validation}/$a $k
-        ./spmm_aspt_gpu.exe ${path_validation}/$a $k
-        ./sddmm_aspt_gpu.exe ${path_validation}/$a $k
-        ./spmm_rode.exe ${path_validation}/$a $k
-        ./sddmm_rode.exe ${path_validation}/$a $k
-        ./spmm_hc.exe ${path_validation}/$a $k
-        ./spmm_dgsparse_0.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_ROWBALANCE
-        ./spmm_dgsparse_1.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_ROWBALANCE
-        ./spmm_dgsparse_2.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_NNZBALANCE
-        ./spmm_dgsparse_3.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_NNZBALANCE
-        ./spmm_dgsparse_4.exe ${path_validation}/$a $k # GESPMM_ALG_ROWCACHING_ROWBALANCE
-        ./spmm_dgsparse_5.exe ${path_validation}/$a $k # GESPMM_ALG_ROWCACHING_NNZBALANCE
-        ./sddmm_dgsparse.exe ${path_validation}/$a $k
-        ./spmm_gnnpilot_1.exe ${path_validation}/$a $k # BALANCE=1
-        ./spmm_gnnpilot_2.exe ${path_validation}/$a $k # BALANCE=2
-        ./sddmm_gnnpilot.exe ${path_validation}/$a $k
-        ./spmm_dtc_0.exe ${path_validation}/$a $k # float_nonsplit
-        ./spmm_dtc_1.exe ${path_validation}/$a $k # float2_nonsplit
-        ./spmm_dtc_2.exe ${path_validation}/$a $k # float2_split
-        ./spmm_dtc_3.exe ${path_validation}/$a $k # float4_nonsplit
-        ./spmm_dtc_4.exe ${path_validation}/$a $k # float4_split
-        ./spmm_dtc_5.exe ${path_validation}/$a $k # v2 float_nonsplit
-        ./spmm_dtc_6.exe ${path_validation}/$a $k # v2 float4_split
-        ./spmm_sputnik.exe ${path_validation}/$a $k
-        ./sddmm_sputnik.exe ${path_validation}/$a $k
-    done
-done
-
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
 export GPU_KERNEL=0
 echo "CPU kernels"
@@ -134,7 +95,49 @@ do
         ./spmm_mkl.exe ${path_validation}/$a $k
         ./spmm_aocl.exe ${path_validation}/$a $k
         ./spmm_aspt_cpu.exe ${path_validation}/$a $k
-        ./sddmm_aspt_cpu.exe ${path_validation}/$a $k
         ./spmm_fusedmm.exe ${path_validation}/$a $k
+
+        ./sddmm_aspt_cpu.exe ${path_validation}/$a $k
     done
 done
+
+# For GPU kernels, we need to run 1000 extra iterations for warmup.
+export GPU_KERNEL=1
+echo "GPU kernels"
+for k in 128;
+do
+    for a in "${matrices[@]}"
+    do
+        echo '--------'
+        echo ${path_validation}/$a
+        ./spmm_cusparse.exe ${path_validation}/$a $k
+        ./spmm_acc.exe ${path_validation}/$a $k
+        ./spmm_aspt_gpu.exe ${path_validation}/$a $k
+        ./spmm_rode.exe ${path_validation}/$a $k
+        ./spmm_hc.exe ${path_validation}/$a $k
+        ./spmm_dgsparse_0.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_ROWBALANCE
+        ./spmm_dgsparse_1.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_ROWBALANCE
+        ./spmm_dgsparse_2.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_NNZBALANCE
+        ./spmm_dgsparse_3.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_NNZBALANCE
+        ./spmm_dgsparse_4.exe ${path_validation}/$a $k # GESPMM_ALG_ROWCACHING_ROWBALANCE
+        ./spmm_dgsparse_5.exe ${path_validation}/$a $k # GESPMM_ALG_ROWCACHING_NNZBALANCE
+        ./spmm_gnnpilot_1.exe ${path_validation}/$a $k # BALANCE=1
+        ./spmm_gnnpilot_2.exe ${path_validation}/$a $k # BALANCE=2
+        ./spmm_dtc_0.exe ${path_validation}/$a $k # float_nonsplit
+        ./spmm_dtc_1.exe ${path_validation}/$a $k # float2_nonsplit
+        ./spmm_dtc_2.exe ${path_validation}/$a $k # float2_split
+        ./spmm_dtc_3.exe ${path_validation}/$a $k # float4_nonsplit
+        ./spmm_dtc_4.exe ${path_validation}/$a $k # float4_split
+        ./spmm_dtc_5.exe ${path_validation}/$a $k # v2 float_nonsplit
+        ./spmm_dtc_6.exe ${path_validation}/$a $k # v2 float4_split
+        ./spmm_sputnik.exe ${path_validation}/$a $k
+
+        ./sddmm_cusparse.exe ${path_validation}/$a $k
+        ./sddmm_aspt_gpu.exe ${path_validation}/$a $k
+        ./sddmm_rode.exe ${path_validation}/$a $k
+        ./sddmm_dgsparse.exe ${path_validation}/$a $k
+        ./sddmm_gnnpilot.exe ${path_validation}/$a $k
+        ./sddmm_sputnik.exe ${path_validation}/$a $k
+    done
+done
+

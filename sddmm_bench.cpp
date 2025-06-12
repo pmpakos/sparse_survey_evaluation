@@ -23,7 +23,7 @@ extern "C"{
 #define Max(x,y) ((x)>(y)?(x):(y))
 #define Abs(x) ((x)>(0)?(x):-(x))
 
-void CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, __attribute__((unused)) ValueType * val,
+double CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, __attribute__((unused)) ValueType * val,
 	INT_T csr_m, INT_T csr_n, INT_T csr_nnz, 
 	INT_T dense_k,
 	ValueType * x, ValueType * y, ValueType * out)
@@ -84,6 +84,7 @@ void CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, __attribute__((unused)) Val
 
 	free(out_gold);
 	free(out_test);
+	return (double)maxDiff;
 }
 
 int main(int argc, char **argv)
@@ -94,7 +95,7 @@ int main(int argc, char **argv)
 	}
 
 	int i = 1;
-	double time;
+	double time_read, time_coo_to_csr, time_convert_to_format, time_compute;
 	
 	struct Matrix_Market * MTX = NULL;
 	ValueType * coo_val = NULL;   // MATRIX_MARKET_FLOAT_T is always double, as reference for error calculation.
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
 
 	int k = atoi(argv[i++]);
 
-	time = time_it(1,
+	time_read = time_it(1,
 		long expand_symmetry = 1;
 		long pattern_dummy_vals = 1;
 		MTX = mtx_read(file_in, expand_symmetry, pattern_dummy_vals);
@@ -139,9 +140,9 @@ int main(int argc, char **argv)
 		MTX->V = NULL;
 		mtx_destroy(&MTX);
 	);
-	printf("time read: %lf\n", time);
+	// printf("time read: %lf\n", time_read);
 
-	time = time_it(1,
+	time_coo_to_csr = time_it(1,
 		csr_a = (typeof(csr_a)) aligned_alloc(64, coo_nnz * sizeof(*csr_a));
 		csr_ja = (typeof(csr_ja)) aligned_alloc(64, coo_nnz * sizeof(*csr_ja));
 		csr_ia = (typeof(csr_ia)) aligned_alloc(64, (coo_m+1) * sizeof(*csr_ia));
@@ -163,16 +164,16 @@ int main(int argc, char **argv)
 		free(coo_colind);
 		free(coo_val);
 	);
-	printf("time coo to csr: %lf\n", time);
+	// printf("time coo to csr: %lf\n", time_coo_to_csr);
 
 	_Pragma("omp parallel for")
 	for (long i=0;i<coo_nnz;i++)
 		csr_a[i] = 1.0;
 
-	time = time_it(1,
+	time_convert_to_format = time_it(1,
 		MF = csr_to_format(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz);
 	);
-	printf("time convert to format: %lf\n", time);
+	// printf("time convert to format: %lf\n", time_convert_to_format);
 
 	x = (typeof(x)) aligned_alloc(64, csr_m * k * sizeof(*x));
 	#pragma omp parallel for
@@ -192,31 +193,33 @@ int main(int argc, char **argv)
 	// printf("---\nout = [ ");
 	// for(int i=0; i<100; i++) printf("%lf ", out[i]);
 	// printf("]\n---\n");
-	CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k, x, y, out);
+	double check_acc = CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k, x, y, out);
 
-	// if GPU, need to run 1000 iterations more for warmup
-	int gpu_kernel = 0;
-	const char* env_gpu_kernel = getenv("GPU_KERNEL");
-	if (env_gpu_kernel != NULL) {
-		gpu_kernel = atoi(env_gpu_kernel);
-	} else {
-		// handle the case where the environment variable is not set
-		fprintf(stderr, "Environment variable GPU_KERNEL not set.\n");
-		exit(EXIT_FAILURE);
-	}
-	if(gpu_kernel)
-		for(int i=0; i<1000; i++)
-			MF->sddmm(x, y, out, k);
+	if(check_acc < 0.1){
+		// if GPU, need to run 1000 iterations more for warmup
+		int gpu_kernel = 0;
+		const char* env_gpu_kernel = getenv("GPU_KERNEL");
+		if (env_gpu_kernel != NULL) {
+			gpu_kernel = atoi(env_gpu_kernel);
+		} else {
+			// handle the case where the environment variable is not set
+			fprintf(stderr, "Environment variable GPU_KERNEL not set.\n");
+			exit(EXIT_FAILURE);
+		}
+		if(gpu_kernel)
+			for(int i=0; i<1000; i++)
+				MF->sddmm(x, y, out, k);
 
-	time = 0;
-	iterations = 128;
-	for(int i=0; i<iterations; i++){
-		time += time_it(1, 
-			MF->sddmm(x, y, out, k);
-		);
+		time_compute = 0;
+		iterations = 128;
+		for(int i=0; i<iterations; i++){
+			time_compute += time_it(1, 
+				MF->sddmm(x, y, out, k);
+			);
+		}
+		double gflops = 2.0 * MF->nnz * k * iterations / time_compute / 1e9;
+		printf("SDDMM kernel - matrix: %s (%ld rows, %ld nnz), read: %.4lf, coo_to_csr: %.4lf, format_conversion: %.4lf, format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->m, MF->nnz, time_read, time_coo_to_csr, time_convert_to_format, MF->format_name, k, gflops);
 	}
-	double gflops = 2.0 * MF->nnz * k * iterations / time / 1e9;
-	printf("SDDMM kernel - matrix: %s (%ld rows, %ld nnz), format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->m, MF->nnz, MF->format_name, k, gflops);
 
 	free(x);
 	free(y);

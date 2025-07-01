@@ -5,17 +5,20 @@
 #####################################################################################################
 # export AOCL_PATH=/various/pmpakos/spmv_paper/aocl-sparse/build/release/
 export AOCL_ROOT=/various/pmpakos/epyc5_libs/aocl-5.0
-# export AOCL_PATH=${AOCL_ROOT}/aocl-sparse/build/release/
-export AOCL_PATH=${AOCL_ROOT}/aocl-sparse-dev/build/release
+# export AOCL_ROOT=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/aocl-5.0                               # FOR LAPTOP
+export AOCL_PATH=${AOCL_ROOT}/aocl-sparse-dev/build/release/
+# export AOCL_PATH=${AOCL_ROOT}/aocl-sparse/build/release/                               # FOR LAPTOP
 
 # export MKL_PATH=/various/pmpakos/intel/oneapi/mkl/2024.1/
 export MKL_PATH=/various/common_tools/intel_parallel_studio/compilers_and_libraries/linux/mkl
+# export MKL_PATH=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/cslab_mkl                               # FOR LAPTOP
 export CUDA_PATH=/usr/local/cuda/
 
 export LD_LIBRARY_PATH=${MKL_PATH}/lib/intel64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${AOCL_PATH}/lib:${LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH=${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/various/pmpakos/epyc5_libs/openssl-1.1.1o/:${AOCL_ROOT}/amd-blis/lib/LP64:${AOCL_ROOT}/amd-libflame/lib/LP64:${AOCL_ROOT}/amd-utils/lib:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/openssl-1.1.1o:${AOCL_ROOT}/amd-blis/lib/LP64:${AOCL_ROOT}/amd-libflame/lib/LP64:${AOCL_ROOT}/amd-utils/lib:$LD_LIBRARY_PATH                               # FOR LAPTOP
 export LD_LIBRARY_PATH=/various/dgal/gcc/gcc-12.2.0/gcc_bin/lib64/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=`pwd`/deps/sputnik/build/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=`pwd`/deps/libtorch/lib/:$LD_LIBRARY_PATH
@@ -30,7 +33,9 @@ export LD_LIBRARY_PATH=`pwd`/deps/libtorch/lib/:$LD_LIBRARY_PATH
 
 # Number of cores used for OpenMP parallelization.
 cores='24'
+# cores='8'                               # FOR LAPTOP
 max_cores=96
+# max_cores=16                               # FOR LAPTOP
 export OMP_NUM_THREADS="$cores"
 # export AOCLSPARSE_NUM_THREADS="$cores"
 export GOMP_CPU_AFFINITY="0-$((max_cores-1))"
@@ -41,11 +46,12 @@ export OMP_WAIT_POLICY='active'
 export OMP_DYNAMIC='false'
 
 # path_validation='/various/pmpakos/SpMV-Research/validation_matrices'
-path_validation='/various/pmpakos/sparse_survey/sparse_survey_evaluation/matrices'
+path_validation='./matrices'
 
 # Select on which matrices from the following list you want to run the benchmarks.
 # These matrices are located on the above defined path.
 matrices=(
+    # these are the initial matrices that I experimented on, no need to run them again
     # scircuit.mtx
     # mac_econ_fwd500.mtx
     # raefsky3.mtx
@@ -122,15 +128,15 @@ matrices=(
 
 )
 
-make clean;
-time make -j
+# make clean;
+# time make -j
 
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
+echo "CPU kernels"
 export GPU_KERNEL=0
 export SYSTEM='AMD-EPYC-24'
-echo "CPU kernels"
-# for k in 16 32 64 128 256 512 1024;
-for k in 512 1024;
+# export SYSTEM='AMD-5800H'                               # FOR LAPTOP
+for k in 16 32 64 128 256 512 1024;
 do
     for a in "${matrices[@]}"
     do
@@ -146,9 +152,10 @@ do
 done
 
 # For GPU kernels, we need to run 1000 extra iterations for warmup.
+echo "GPU kernels"
 export GPU_KERNEL=1
 export SYSTEM='NVIDIA-A100'
-echo "GPU kernels"
+# export SYSTEM='NVIDIA-3070M'                               # FOR LAPTOP
 for k in 16 32 64 128 256 512 1024;
 do
     for a in "${matrices[@]}"

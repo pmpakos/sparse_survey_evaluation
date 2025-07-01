@@ -40,11 +40,13 @@ export OMP_WAIT_POLICY='active'
 # Don't let the runtime deliver fewer threads than those we asked for.
 export OMP_DYNAMIC='false'
 
-path_validation='/various/pmpakos/SpMV-Research/validation_matrices'
+# path_validation='/various/pmpakos/SpMV-Research/validation_matrices'
+path_validation='/various/pmpakos/sparse_survey/sparse_survey_evaluation/matrices'
+
 # Select on which matrices from the following list you want to run the benchmarks.
 # These matrices are located on the above defined path.
 matrices=(
-    scircuit.mtx
+    # scircuit.mtx
     # mac_econ_fwd500.mtx
     # raefsky3.mtx
     # rgg_n_2_17_s0.mtx
@@ -78,6 +80,46 @@ matrices=(
     # TSOPF_RS_b2383.mtx
     # in-2004.mtx
     # Ga41As41H72.mtx
+    # mac_econ_fwd500.mtx
+    # raefsky3.mtx
+    # rgg_n_2_17_s0.mtx
+    # bbmat.mtx
+    # appu.mtx
+    # mc2depi.mtx
+    # cop20k_A.mtx
+    # ASIC_680k.mtx
+    # webbase-1M.mtx
+    # TSOPF_RS_b300_c3.mtx
+    # roadNet-TX.mtx
+    # com-Youtube.mtx
+    # Stanford_Berkeley.mtx
+    # gupta3.mtx
+    # mip1.mtx
+    # crankseg_2.mtx
+    # rail4284.mtx
+    # Si41Ge41H72.mtx
+    # in-2004.mtx
+
+    # these are the sparse survey matrices (selected from other matrices that work on graphs etc...)
+    citeseer.mtx
+    cora.mtx
+    pubmed.mtx
+    PROTEINS.mtx
+    ogbl-ddi.mtx
+    ogbl-collab.mtx
+    ogbn-arxiv.mtx
+    harvard.mtx
+    com-Amazon.mtx
+    REDDIT-BINARY.mtx
+    amazon0505.mtx
+    OVCAR-8H.mtx
+    wiki-Talk.mtx
+    roadNet-CA.mtx
+    com-Youtube.mtx
+    web-BerkStan.mtx
+    sx-stackoverflow.mtx
+    ogbn-proteins.mtx
+
 )
 
 make clean;
@@ -85,8 +127,10 @@ time make -j
 
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
 export GPU_KERNEL=0
+export SYSTEM='AMD-EPYC-24'
 echo "CPU kernels"
-for k in 128;
+# for k in 16 32 64 128 256 512 1024;
+for k in 512 1024;
 do
     for a in "${matrices[@]}"
     do
@@ -103,18 +147,19 @@ done
 
 # For GPU kernels, we need to run 1000 extra iterations for warmup.
 export GPU_KERNEL=1
+export SYSTEM='NVIDIA-A100'
 echo "GPU kernels"
-for k in 128;
+for k in 16 32 64 128 256 512 1024;
 do
     for a in "${matrices[@]}"
     do
         echo '--------'
         echo ${path_validation}/$a
         ./spmm_cusparse.exe ${path_validation}/$a $k
-        ./spmm_acc.exe ${path_validation}/$a $k
+        # ./spmm_acc.exe ${path_validation}/$a $k
         ./spmm_aspt_gpu.exe ${path_validation}/$a $k
         ./spmm_rode.exe ${path_validation}/$a $k
-        ./spmm_hc.exe ${path_validation}/$a $k
+        # ./spmm_hc.exe ${path_validation}/$a $k
         ./spmm_dgsparse_0.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_ROWBALANCE
         ./spmm_dgsparse_1.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_ROWBALANCE
         ./spmm_dgsparse_2.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_NNZBALANCE
@@ -134,10 +179,10 @@ do
 
         ./sddmm_cusparse.exe ${path_validation}/$a $k
         ./sddmm_aspt_gpu.exe ${path_validation}/$a $k
-        ./sddmm_rode.exe ${path_validation}/$a $k
+        # ./sddmm_rode.exe ${path_validation}/$a $k
         ./sddmm_dgsparse.exe ${path_validation}/$a $k
         ./sddmm_gnnpilot.exe ${path_validation}/$a $k
-        ./sddmm_sputnik.exe ${path_validation}/$a $k
+        # ./sddmm_sputnik.exe ${path_validation}/$a $k
     done
 done
 

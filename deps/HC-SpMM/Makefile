@@ -18,7 +18,7 @@ NVCC_FLAGS += -diag-suppress=191,177
 
 CC_FLAGS = -O3 -Wall -std=c++17 -fPIC
 
-INC = -I$(CUDA_HOME)/include -I$(PYTHON_HOME)/include/python3.9 -I$(TORCH_HOME)/include/torch/csrc/api/include/ -I$(TORCH_HOME)/include
+INC = -I$(CUDA_HOME)/include $(PYTORCH_INC)
 
 all: $(TARGET)
 

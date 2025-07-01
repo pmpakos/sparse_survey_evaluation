@@ -186,6 +186,13 @@ int main(int argc, char **argv)
 	double check_acc = CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, k, x, y);
 
 	if(check_acc < 0.1){
+		const char* system = getenv("SYSTEM");
+		if (system == NULL) {
+			// handle the case where the environment variable is not set
+			fprintf(stderr, "Environment variable SYSTEM not set.\n");
+			exit(EXIT_FAILURE);
+		}
+
 		// if GPU, need to run 1000 iterations more for warmup
 		int gpu_kernel = 0;
 		const char* env_gpu_kernel = getenv("GPU_KERNEL");
@@ -208,7 +215,7 @@ int main(int argc, char **argv)
 			);
 		}
 		double gflops = 2.0 * MF->nnz * k * iterations / time_compute / 1e9;
-		printf("SpMM kernel - matrix: %s (%ld rows, %ld nnz), read: %.4lf, coo_to_csr: %.4lf, format_conversion: %.4lf, format: %s, k: %d, gflops: %.2lf\n", matrix_name, MF->m, MF->nnz, time_read, time_coo_to_csr, time_convert_to_format, MF->format_name, k, gflops);
+		printf("SpMM kernel - matrix: %s (%ld rows, %ld nnz), read: %.4lf, coo_to_csr: %.4lf, format_conversion: %.4lf, format: %s, k: %d, system: %s, gflops: %.2lf\n", matrix_name, MF->m, MF->nnz, time_read, time_coo_to_csr, time_convert_to_format, MF->format_name, k, system, gflops);
 	}
 
 	free(x);

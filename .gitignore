@@ -4,3 +4,13 @@
 *.exe
 obj/
 deps/libtorch
+
+.ipynb*
+
+data_analysis/out_logs/
+data_analysis/plots*/
+
+NVIDIA-treetrack*/
+nsight-compute-lock
+
+matrices/

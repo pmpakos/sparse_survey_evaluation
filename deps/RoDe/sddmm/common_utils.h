@@ -2,6 +2,7 @@
 #define SPC_COMMON_UTILS_H_
 
 #include "basic_utils.h"
+#include <cstdint>  // for uint32_t
 namespace SPC {
 
 // barrier *******************************************************

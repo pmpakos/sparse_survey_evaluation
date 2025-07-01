@@ -24,7 +24,7 @@ EXE += spmm_fusedmm.exe
 #####################################################################################################
 #####################################################################################################
 
-# COMPILER_PREFIX=/usr/bin
+# COMPILER_PREFIX=/usr/bin                               # FOR LAPTOP
 COMPILER_PREFIX=/various/dgal/gcc/gcc-12.2.0/gcc_bin/bin
 
 CC = $(COMPILER_PREFIX)/gcc
@@ -106,6 +106,7 @@ CPPFLAGS+=" ${CFLAGS}"
 #########################
 
 LIBS_ROOT=/various/pmpakos/epyc5_libs
+# LIBS_ROOT=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs
 SPARSE_SURVEY_ROOT=$(shell pwd)/deps
 
 
@@ -129,9 +130,11 @@ GNNPILOT_PATH=$(SPARSE_SURVEY_ROOT)/GNNPilot
 
 TORCH_HOME=$(SPARSE_SURVEY_ROOT)/libtorch
 PYTHON_HOME=/various/pmpakos/python-3.9.7
+# PYTHON_HOME=/usr                               # FOR LAPTOP
 
 PYTORCH_INC = 
 PYTORCH_INC += -I'$(PYTHON_HOME)/include/python3.9'
+# PYTORCH_INC += -I'$(PYTHON_HOME)/include/python3.12'                               # FOR LAPTOP
 PYTORCH_INC += -I'$(TORCH_HOME)/include/torch/csrc/api/include/' -I'$(TORCH_HOME)/include'
 
 PYTORCH_LIBS =
@@ -153,28 +156,30 @@ PYTORCH_LIBS += -lc10 -lc10_cuda
 
 # MKL_PATH = /various/pmpakos/intel/oneapi/mkl/2024.1
 MKL_PATH = /various/common_tools/intel_parallel_studio/compilers_and_libraries/linux/mkl
+# MKL_PATH = /home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/cslab_mkl                               # FOR LAPTOP
+
 # AOCL_PATH = /various/pmpakos/spmv_paper/aocl-sparse/build/release/
 AOCL_ROOT=$(LIBS_ROOT)/aocl-5.0/
-# AOCL_PATH=$(AOCL_ROOT)/aocl-sparse/build/release/
+# AOCL_PATH=$(AOCL_ROOT)/aocl-sparse/build/release/                               # FOR LAPTOP
 AOCL_PATH=$(AOCL_ROOT)/aocl-sparse-dev/build/release/
 # AOCL_PATH_3=/various/pmpakos/spmv_paper/aocl-sparse/build/release/
-AOCL_PATH3=$(LIBS_ROOT)/aocl-sparse-3.2/build/release/
-AOCL_PATH4=$(LIBS_ROOT)/aocl-sparse-4.0/build/release/
+# AOCL_PATH3=$(LIBS_ROOT)/aocl-sparse-3.2/build/release/
+# AOCL_PATH4=$(LIBS_ROOT)/aocl-sparse-4.0/build/release/
 
 CPPFLAGS_MKL = -I'$(MKL_PATH)/include' -I'/usr/include/mkl' -Wno-deprecated-declarations -m64 -mavx2
 LDFLAGS_MKL  = -L'$(MKL_PATH)/lib/intel64' -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -ldl
 
 CPPFLAGS_AOCL5 = -I'$(AOCL_PATH)/include' -I'$(AOCL_PATH)/src/include' -I'$(AOCL_PATH)/../../library/src/include' -m64 -mavx2 -std=c++17
-CPPFLAGS_AOCL3 = -I'$(AOCL_PATH3)/include' -I'$(AOCL_PATH3)/src/include' -I'$(AOCL_PATH3)/../../library/src/include' -m64 -mavx2
-CPPFLAGS_AOCL4 = -I'$(AOCL_PATH4)/include' -I'$(AOCL_PATH4)/src/include' -I'$(AOCL_PATH4)/../../library/src/include' -m64 -mavx2
+# CPPFLAGS_AOCL3 = -I'$(AOCL_PATH3)/include' -I'$(AOCL_PATH3)/src/include' -I'$(AOCL_PATH3)/../../library/src/include' -m64 -mavx2
+# CPPFLAGS_AOCL4 = -I'$(AOCL_PATH4)/include' -I'$(AOCL_PATH4)/src/include' -I'$(AOCL_PATH4)/../../library/src/include' -m64 -mavx2
 
 LDFLAGS_AOCL5 = 
 LDFLAGS_AOCL5 += -L'$(LIBS_ROOT)/openssl-1.1.1o/' -L'$(AOCL_ROOT)/amd-blis/lib/LP64/' -L'$(AOCL_ROOT)/amd-libflame/lib/LP64/' -L'$(AOCL_ROOT)/amd-utils/lib/' 
 LDFLAGS_AOCL5 += -lflame -lblis-mt -laoclutils
 LDFLAGS_AOCL5 += -L'$(AOCL_PATH)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -lpthread -ldl
 
-LDFLAGS_AOCL3 = -L'$(AOCL_PATH3)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -lpthread -ldl
-LDFLAGS_AOCL4 = -L'$(AOCL_PATH4)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -lpthread -ldl
+# LDFLAGS_AOCL3 = -L'$(AOCL_PATH3)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -lpthread -ldl
+# LDFLAGS_AOCL4 = -L'$(AOCL_PATH4)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -lpthread -ldl
 
 #########################
 
@@ -237,7 +242,7 @@ sddmm_rode.exe: obj/sddmm_bench.o kernel_rode.cu $(LIB_OBJ)
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(RODE_PATH)'" $^ -o $@ $(LDFLAGS) -L'$(RODE_PATH)/sddmm' -lrode_sddmm
 
 spmm_hc.exe: obj/spmm_bench.o kernel_hc.cu $(LIB_OBJ)
-	cd $(HC_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	cd $(HC_PATH); make clean; make PYTORCH_INC=$(PYTORCH_INC) CPP=$(CPP) -j; cd -
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(HC_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(HC_PATH)' -lhc_spmm $(PYTORCH_LIBS)
 
 # mat_ge_spmm.exe: mat_ge_spmm.cu $(LIB_OBJ)
@@ -255,15 +260,15 @@ sddmm_dgsparse.exe: obj/sddmm_bench.o kernel_dgsparse.cu $(LIB_OBJ)
 	$(NVCC) $(NVCCFLAGS) --compiler-options "$(CFLAGS) -D'SDDMM_KERNEL' -I'$(DGSPARSE_PATH)/sddmm'" $^ -o $@ $(LDFLAGS) -L'$(DGSPARSE_PATH)/sddmm' -lsddmm
 
 spmm_gnnpilot.exe: obj/spmm_bench.o kernel_gnnpilot.cu $(LIB_OBJ)
-	cd $(GNNPILOT_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	cd $(GNNPILOT_PATH); make clean; make PYTORCH_INC=$(PYTORCH_INC) CPP=$(CPP) -j; cd -
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'BALANCE=1' -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o spmm_gnnpilot_1.exe $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'BALANCE=2' -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o spmm_gnnpilot_2.exe $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 sddmm_gnnpilot.exe: obj/sddmm_bench.o kernel_gnnpilot.cu $(LIB_OBJ)
-	cd $(GNNPILOT_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	cd $(GNNPILOT_PATH); make clean; make PYTORCH_INC=$(PYTORCH_INC) CPP=$(CPP) -j; cd -
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -I'$(GNNPILOT_PATH)' $(PYTORCH_INC)" $^ -o $@ $(LDFLAGS) -L'$(GNNPILOT_PATH)' -lgnnpilot $(PYTORCH_LIBS)
 
 spmm_dtc.exe: obj/spmm_bench.o kernel_dtc.cu $(LIB_OBJ)
-	cd $(DTC_PATH); make clean; make TORCH_HOME=$(TORCH_HOME) PYTHON_HOME=$(PYTHON_HOME) CPP=$(CPP) -j; cd -
+	cd $(DTC_PATH); make clean; make PYTORCH_INC=$(PYTORCH_INC) CPP=$(CPP) -j; cd -
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=0' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_0.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=1' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_1.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)
 	$(NVCC) -std=c++17 $(NVCCFLAGS) --compiler-options "-std=c++17 $(CFLAGS) -D'METHOD=2' -I'$(DTC_PATH)' $(PYTORCH_INC)" $^ -o spmm_dtc_2.exe $(LDFLAGS) -L'$(DTC_PATH)' -ldtc_spmm $(PYTORCH_LIBS)

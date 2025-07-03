@@ -1,25 +1,38 @@
 #!/bin/bash
 
+MODE=server
+# MODE=laptop
+
 #####################################################################################################
 #### No need to edit the following paths! ###########################################################
 #####################################################################################################
 # export AOCL_PATH=/various/pmpakos/spmv_paper/aocl-sparse/build/release/
-export AOCL_ROOT=/various/pmpakos/epyc5_libs/aocl-5.0
-# export AOCL_ROOT=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/aocl-5.0                               # FOR LAPTOP
-export AOCL_PATH=${AOCL_ROOT}/aocl-sparse-dev/build/release/
-# export AOCL_PATH=${AOCL_ROOT}/aocl-sparse/build/release/                               # FOR LAPTOP
 
-# export MKL_PATH=/various/pmpakos/intel/oneapi/mkl/2024.1/
-export MKL_PATH=/various/common_tools/intel_parallel_studio/compilers_and_libraries/linux/mkl
-# export MKL_PATH=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/cslab_mkl                               # FOR LAPTOP
+if [[ "$MODE" == "laptop" ]]; then
+    export AOCL_ROOT=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/aocl-5.0
+    export AOCL_PATH=${AOCL_ROOT}/aocl-sparse/build/release/
+else
+    export AOCL_ROOT=/various/pmpakos/epyc5_libs/aocl-5.0
+    export AOCL_PATH=${AOCL_ROOT}/aocl-sparse-dev/build/release/
+fi
+
+if [[ "$MODE" == "laptop" ]]; then
+    export MKL_PATH=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/cslab_mkl
+else
+    # export MKL_PATH=/various/pmpakos/intel/oneapi/mkl/2024.1/
+    export MKL_PATH=/various/common_tools/intel_parallel_studio/compilers_and_libraries/linux/mkl
+fi
 export CUDA_PATH=/usr/local/cuda/
 
 export LD_LIBRARY_PATH=${MKL_PATH}/lib/intel64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${AOCL_PATH}/lib:${LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH=${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/various/pmpakos/epyc5_libs/openssl-1.1.1o/:${AOCL_ROOT}/amd-blis/lib/LP64:${AOCL_ROOT}/amd-libflame/lib/LP64:${AOCL_ROOT}/amd-utils/lib:$LD_LIBRARY_PATH
-# export LD_LIBRARY_PATH=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/openssl-1.1.1o:${AOCL_ROOT}/amd-blis/lib/LP64:${AOCL_ROOT}/amd-libflame/lib/LP64:${AOCL_ROOT}/amd-utils/lib:$LD_LIBRARY_PATH                               # FOR LAPTOP
-export LD_LIBRARY_PATH=/various/dgal/gcc/gcc-12.2.0/gcc_bin/lib64/:$LD_LIBRARY_PATH
+if [[ "$MODE" == "laptop" ]]; then
+    export LD_LIBRARY_PATH=/home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/openssl-1.1.1o:${AOCL_ROOT}/amd-blis/lib/LP64:${AOCL_ROOT}/amd-libflame/lib/LP64:${AOCL_ROOT}/amd-utils/lib:$LD_LIBRARY_PATH                               # FOR LAPTOP
+else
+    export LD_LIBRARY_PATH=/various/pmpakos/epyc5_libs/openssl-1.1.1o/:${AOCL_ROOT}/amd-blis/lib/LP64:${AOCL_ROOT}/amd-libflame/lib/LP64:${AOCL_ROOT}/amd-utils/lib:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=/various/dgal/gcc/gcc-12.2.0/gcc_bin/lib64/:$LD_LIBRARY_PATH
+fi
 export LD_LIBRARY_PATH=`pwd`/deps/sputnik/build/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=`pwd`/deps/libtorch/lib/:$LD_LIBRARY_PATH
 # lscpu | grep -q -i amd
@@ -32,10 +45,13 @@ export LD_LIBRARY_PATH=`pwd`/deps/libtorch/lib/:$LD_LIBRARY_PATH
 #####################################################################################################
 
 # Number of cores used for OpenMP parallelization.
-cores='24'
-# cores='8'                               # FOR LAPTOP
-max_cores=96
-# max_cores=16                               # FOR LAPTOP
+if [[ "$MODE" == "laptop" ]]; then
+    cores='8'
+    max_cores=16
+else
+    cores='24'
+    max_cores=96
+fi
 export OMP_NUM_THREADS="$cores"
 # export AOCLSPARSE_NUM_THREADS="$cores"
 export GOMP_CPU_AFFINITY="0-$((max_cores-1))"
@@ -46,12 +62,14 @@ export OMP_WAIT_POLICY='active'
 export OMP_DYNAMIC='false'
 
 # Select the dataset you want to run the benchmarks on.
-# export DATASET='DLMC'
-export DATASET='MATRIX_MARKET'
+# export DATASET='MATRIX_MARKET'
+export DATASET='DLMC'
 
 # path_validation='/various/pmpakos/SpMV-Research/validation_matrices'
 path_validation='./matrices'
-path_dlmc='/various/itasou/dlmc'
+
+# path_dlmc='/various/itasou/dlmc'
+path_dlmc='./dlmc_matrices'
 
 # Select on which matrices from the following list you want to run the benchmarks.
 # These matrices are located on the above defined path.
@@ -135,8 +153,8 @@ matrices_validation=(
 
 dlmc_matrices_files=(
     "$path_dlmc/transformer_matrices.txt"
-    # "$path_dlcm/transformer_matrices_small.txt"
-    
+    # "$path_dlmc/transformer_matrices_small.txt"
+
 )
 if [ "$DATASET" = "MATRIX_MARKET" ]; then
     path="$path_validation"
@@ -164,8 +182,11 @@ fi
 # For CPU kernels, no need for 1000 extra iterations for warmup, just change the environment variable
 echo "CPU kernels"
 export GPU_KERNEL=0
-export SYSTEM='AMD-EPYC-24'
-# export SYSTEM='AMD-5800H'                               # FOR LAPTOP
+if [[ "$MODE" == "laptop" ]]; then
+    export SYSTEM='AMD-5800H'
+else
+    export SYSTEM='AMD-EPYC-24'
+fi
 for k in 16 32 64 128 256 512 1024;
 do
     for a in "${matrices[@]}"
@@ -184,8 +205,11 @@ done
 # For GPU kernels, we need to run 1000 extra iterations for warmup.
 echo "GPU kernels"
 export GPU_KERNEL=1
-export SYSTEM='NVIDIA-A100'
-# export SYSTEM='NVIDIA-3070M'                               # FOR LAPTOP
+if [[ "$MODE" == "laptop" ]]; then
+    export SYSTEM='NVIDIA-3070M'
+else
+    export SYSTEM='NVIDIA-A100'
+fi
 for k in 16 32 64 128 256 512 1024;
 do
     for a in "${matrices[@]}"

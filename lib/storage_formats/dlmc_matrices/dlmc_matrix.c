@@ -266,7 +266,7 @@ smtx_read(char * filename, long expand_symmetry, long pattern_dummy_vals)
 	file_to_lines(A, filename, 0);
 	MTX->filename = strdup(filename);
 	i = smtx_parse_header(A, MTX);
-	printf("line:%ld\n",i);
+	// printf("line:%ld\n",i);
 	if (!strcmp(MTX->format, "csr"))
 	{
 		MTX->R = malloc((MTX->m +1) * sizeof(*(MTX->R)));

@@ -77,7 +77,7 @@ smtx_parse_array_format(char ** lines, long * lengths, struct DLMC_Matrix * MTX)
 				long k = 0;
 				long len=0; //j = 0;
 				long value;
-				printf("rows: %ld\n", M);
+				// printf("rows: %ld\n", M);
 
 				for (j=0;j<M+1;j++)
 				{
@@ -113,11 +113,11 @@ smtx_parse_array_format(char ** lines, long * lengths, struct DLMC_Matrix * MTX)
 		_Pragma("omp for")
 		for (j=0;j<nnz;j++)
 		{
-			unsigned int seed = (unsigned int)(time(NULL) + j + omp_get_thread_num());
-			srand(seed);
-			V[j] = generate_random_float(-1.0,1.0);
+			// unsigned int seed = (unsigned int)(time(NULL) + j + omp_get_thread_num());
+			// srand(seed);
+			// V[j] = generate_random_float(-1.0,1.0);
 
-			// V[j]=1.0f;
+			V[j]=1.0f;
 		}
 	}
 }

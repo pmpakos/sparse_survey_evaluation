@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 	}
 
 	int i = 1;
-	double time_read, time_coo_to_csr, time_csr_format, time_convert_to_format, time_compute;
+	double time_read, time_coo_to_csr, time_convert_to_format, time_compute;
 	
 	struct Matrix_Market * MTX = NULL;
 	struct DLMC_Matrix * SMTX;
@@ -168,7 +168,6 @@ int main(int argc, char **argv)
 			free(coo_colind);
 			free(coo_val);
 		);
-	// printf("time coo to csr: %lf\n", time_coo_to_csr);
 	} else if (strcmp(dataset, "DLMC") == 0) {
 		time_read = time_it(1,
 			long expand_symmetry = 1;
@@ -186,14 +185,13 @@ int main(int argc, char **argv)
 			smtx_destroy(&SMTX);
 		);
 
-		time_csr_format = time_it(1,
+		time_coo_to_csr = time_it(1,
 			csr_a = (typeof(csr_a)) aligned_alloc(64, coo_nnz * sizeof(*csr_a));
 			csr_ja = (typeof(csr_ja)) aligned_alloc(64, coo_nnz * sizeof(*csr_ja));
 			csr_ia = (typeof(csr_ia)) aligned_alloc(64, (coo_m+1) * sizeof(*csr_ia));
 			csr_m = coo_m;
 			csr_n = coo_n;
 			csr_nnz = coo_nnz;
-			printf("coo_nnz: %ld, coo_m: %ld, coo_n: %ld\n");
 			_Pragma("omp parallel for")
 			for (long i=0;i<coo_nnz;i++)
 			{
@@ -209,12 +207,12 @@ int main(int argc, char **argv)
 			free(coo_colind);
 			free(coo_val);
 		);
-		printf("time memory aligning: %lf\n", time_csr_format);
 
 	} else {
 		printf("Error: dataset not set\n");
 		return 1;
 	}
+	// printf("time coo to csr: %lf\n", time_coo_to_csr);
 
 	_Pragma("omp parallel for")
 	for (long i=0;i<coo_nnz;i++)

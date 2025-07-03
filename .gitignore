@@ -4,6 +4,7 @@
 *.exe
 obj/
 deps/libtorch
+out_logs/
 
 .ipynb*
 
@@ -14,3 +15,4 @@ NVIDIA-treetrack*/
 nsight-compute-lock
 
 matrices/
+matrices_dlmc/

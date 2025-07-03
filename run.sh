@@ -45,12 +45,17 @@ export OMP_WAIT_POLICY='active'
 # Don't let the runtime deliver fewer threads than those we asked for.
 export OMP_DYNAMIC='false'
 
+# Select the dataset you want to run the benchmarks on.
+# export DATASET='DLMC'
+export DATASET='MATRIX_MARKET'
+
 # path_validation='/various/pmpakos/SpMV-Research/validation_matrices'
 path_validation='./matrices'
+path_dlmc='/various/itasou/dlmc'
 
 # Select on which matrices from the following list you want to run the benchmarks.
 # These matrices are located on the above defined path.
-matrices=(
+matrices_validation=(
     # these are the initial matrices that I experimented on, no need to run them again
     # scircuit.mtx
     # mac_econ_fwd500.mtx
@@ -128,6 +133,31 @@ matrices=(
 
 )
 
+dlmc_matrices_files=(
+    "$path_dlmc/transformer_matrices.txt"
+    # "$path_dlcm/transformer_matrices_small.txt"
+    
+)
+if [ "$DATASET" = "MATRIX_MARKET" ]; then
+    path="$path_validation"
+    matrices=(
+        "${matrices_validation[@]}"
+    )
+elif [ "$DATASET" = "DLMC" ]; then
+    path="$path_dlmc"
+    matrices=()
+
+    for f in "${dlmc_matrices_files[@]}"; do
+        mapfile -t dlmc_matrices < "$f"
+        for a in "${dlmc_matrices[@]}"; do
+            matrices+=("$a")
+        done
+    done
+else
+    echo "Unknown dataset: $DATASET"
+    exit 1
+fi
+
 # make clean;
 # time make -j
 
@@ -141,13 +171,13 @@ do
     for a in "${matrices[@]}"
     do
         echo '--------'
-        echo ${path_validation}/$a
-        ./spmm_mkl.exe ${path_validation}/$a $k
-        ./spmm_aocl.exe ${path_validation}/$a $k
-        ./spmm_aspt_cpu.exe ${path_validation}/$a $k
-        ./spmm_fusedmm.exe ${path_validation}/$a $k
+        echo ${path}/$a
+        ./spmm_mkl.exe ${path}/$a $k
+        ./spmm_aocl.exe ${path}/$a $k
+        ./spmm_aspt_cpu.exe ${path}/$a $k
+        ./spmm_fusedmm.exe ${path}/$a $k
 
-        ./sddmm_aspt_cpu.exe ${path_validation}/$a $k
+        ./sddmm_aspt_cpu.exe ${path}/$a $k
     done
 done
 
@@ -161,35 +191,35 @@ do
     for a in "${matrices[@]}"
     do
         echo '--------'
-        echo ${path_validation}/$a
-        ./spmm_cusparse.exe ${path_validation}/$a $k
-        # ./spmm_acc.exe ${path_validation}/$a $k
-        ./spmm_aspt_gpu.exe ${path_validation}/$a $k
-        ./spmm_rode.exe ${path_validation}/$a $k
-        # ./spmm_hc.exe ${path_validation}/$a $k
-        ./spmm_dgsparse_0.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_ROWBALANCE
-        ./spmm_dgsparse_1.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_ROWBALANCE
-        ./spmm_dgsparse_2.exe ${path_validation}/$a $k # GESPMM_ALG_SEQREDUCE_NNZBALANCE
-        ./spmm_dgsparse_3.exe ${path_validation}/$a $k # GESPMM_ALG_PARREDUCE_NNZBALANCE
-        ./spmm_dgsparse_4.exe ${path_validation}/$a $k # GESPMM_ALG_ROWCACHING_ROWBALANCE
-        ./spmm_dgsparse_5.exe ${path_validation}/$a $k # GESPMM_ALG_ROWCACHING_NNZBALANCE
-        ./spmm_gnnpilot_1.exe ${path_validation}/$a $k # BALANCE=1
-        ./spmm_gnnpilot_2.exe ${path_validation}/$a $k # BALANCE=2
-        ./spmm_dtc_0.exe ${path_validation}/$a $k # float_nonsplit
-        ./spmm_dtc_1.exe ${path_validation}/$a $k # float2_nonsplit
-        ./spmm_dtc_2.exe ${path_validation}/$a $k # float2_split
-        ./spmm_dtc_3.exe ${path_validation}/$a $k # float4_nonsplit
-        ./spmm_dtc_4.exe ${path_validation}/$a $k # float4_split
-        ./spmm_dtc_5.exe ${path_validation}/$a $k # v2 float_nonsplit
-        ./spmm_dtc_6.exe ${path_validation}/$a $k # v2 float4_split
-        ./spmm_sputnik.exe ${path_validation}/$a $k
+        echo ${path}/$a
+        ./spmm_cusparse.exe ${path}/$a $k
+        # ./spmm_acc.exe ${path}/$a $k
+        ./spmm_aspt_gpu.exe ${path}/$a $k
+        ./spmm_rode.exe ${path}/$a $k
+        # ./spmm_hc.exe ${path}/$a $k
+        ./spmm_dgsparse_0.exe ${path}/$a $k # GESPMM_ALG_SEQREDUCE_ROWBALANCE
+        ./spmm_dgsparse_1.exe ${path}/$a $k # GESPMM_ALG_PARREDUCE_ROWBALANCE
+        ./spmm_dgsparse_2.exe ${path}/$a $k # GESPMM_ALG_SEQREDUCE_NNZBALANCE
+        ./spmm_dgsparse_3.exe ${path}/$a $k # GESPMM_ALG_PARREDUCE_NNZBALANCE
+        ./spmm_dgsparse_4.exe ${path}/$a $k # GESPMM_ALG_ROWCACHING_ROWBALANCE
+        ./spmm_dgsparse_5.exe ${path}/$a $k # GESPMM_ALG_ROWCACHING_NNZBALANCE
+        ./spmm_gnnpilot_1.exe ${path}/$a $k # BALANCE=1
+        ./spmm_gnnpilot_2.exe ${path}/$a $k # BALANCE=2
+        ./spmm_dtc_0.exe ${path}/$a $k # float_nonsplit
+        ./spmm_dtc_1.exe ${path}/$a $k # float2_nonsplit
+        ./spmm_dtc_2.exe ${path}/$a $k # float2_split
+        ./spmm_dtc_3.exe ${path}/$a $k # float4_nonsplit
+        ./spmm_dtc_4.exe ${path}/$a $k # float4_split
+        ./spmm_dtc_5.exe ${path}/$a $k # v2 float_nonsplit
+        ./spmm_dtc_6.exe ${path}/$a $k # v2 float4_split
+        ./spmm_sputnik.exe ${path}/$a $k
 
-        ./sddmm_cusparse.exe ${path_validation}/$a $k
-        ./sddmm_aspt_gpu.exe ${path_validation}/$a $k
-        # ./sddmm_rode.exe ${path_validation}/$a $k
-        ./sddmm_dgsparse.exe ${path_validation}/$a $k
-        ./sddmm_gnnpilot.exe ${path_validation}/$a $k
-        # ./sddmm_sputnik.exe ${path_validation}/$a $k
+        ./sddmm_cusparse.exe ${path}/$a $k
+        ./sddmm_aspt_gpu.exe ${path}/$a $k
+        # ./sddmm_rode.exe ${path}/$a $k
+        ./sddmm_dgsparse.exe ${path}/$a $k
+        ./sddmm_gnnpilot.exe ${path}/$a $k
+        # ./sddmm_sputnik.exe ${path}/$a $k
     done
 done
 

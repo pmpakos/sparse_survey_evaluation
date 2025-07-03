@@ -2,20 +2,20 @@
 EXE  = 
 # GPU
 EXE += spmm_cusparse.exe sddmm_cusparse.exe
-EXE += spmm_acc.exe
-EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
-EXE += spmm_rode.exe sddmm_rode.exe
-EXE += spmm_hc.exe
-EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
-EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
-EXE += spmm_dtc.exe
-EXE += spmm_sputnik.exe sddmm_sputnik.exe
+# EXE += spmm_acc.exe
+# EXE += spmm_aspt_gpu.exe sddmm_aspt_gpu.exe
+# EXE += spmm_rode.exe sddmm_rode.exe
+# EXE += spmm_hc.exe
+# EXE += spmm_dgsparse.exe sddmm_dgsparse.exe
+# EXE += spmm_gnnpilot.exe sddmm_gnnpilot.exe
+# EXE += spmm_dtc.exe
+# EXE += spmm_sputnik.exe sddmm_sputnik.exe
 
 # CPU
-EXE += spmm_mkl.exe
-EXE += spmm_aocl.exe
-EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
-EXE += spmm_fusedmm.exe
+# EXE += spmm_mkl.exe
+# EXE += spmm_aocl.exe
+# EXE += spmm_aspt_cpu.exe sddmm_aspt_cpu.exe
+# EXE += spmm_fusedmm.exe
 
 
 #####################################################################################################
@@ -204,7 +204,7 @@ LDFLAGS =
 LDFLAGS += -lm
 
 
-LIB_SRC = pthread_functions.c omp_functions.c string_util.c io.c parallel_io.c hash.c random.c array_metrics.c plot.c csr_util.c csr_converter.c matrix_market.c hardware_topology.c
+LIB_SRC = pthread_functions.c omp_functions.c string_util.c io.c parallel_io.c hash.c random.c array_metrics.c plot.c csr_util.c csr_converter.c matrix_market.c dlmc_matrix.c hardware_topology.c
 LIB_OBJ := $(LIB_SRC)
 LIB_OBJ := $(patsubst %.c,obj/%.o,$(LIB_OBJ))
 LIB_OBJ := $(patsubst %.cpp,obj/%.o,$(LIB_OBJ))
@@ -343,6 +343,8 @@ $(call Rule_Auto_Dependencies,obj/csr_converter.o,$(library)/aux/csr_converter.c
 $(call Rule_Auto_Dependencies,obj/csr_util.o,$(library)/aux/csr_util.c,$(CFLAGS))
 	$(CC) $(CFLAGS) -c $< -o $@
 $(call Rule_Auto_Dependencies,obj/matrix_market.o,$(library)/storage_formats/matrix_market/matrix_market.c,$(CFLAGS))
+	$(CC) $(CFLAGS) -c $< -o $@
+$(call Rule_Auto_Dependencies,obj/dlmc_matrix.o,$(library)/storage_formats/dlmc_matrices/dlmc_matrix.c,$(CFLAGS))
 	$(CC) $(CFLAGS) -c $< -o $@
 $(call Rule_Auto_Dependencies,obj/hardware_topology.o,$(library)/topology/hardware_topology.c,$(CFLAGS))
 	$(CC) $(CFLAGS) -c $< -o $@

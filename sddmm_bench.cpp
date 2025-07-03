@@ -11,6 +11,7 @@ extern "C"{
 	#include "string_util.h"
 	#include "aux/csr_converter.h"
 	#include "storage_formats/matrix_market/matrix_market.h"
+	#include "storage_formats/dlmc_matrices/dlmc_matrix.h"
 #ifdef __cplusplus
 }
 #endif
@@ -95,9 +96,10 @@ int main(int argc, char **argv)
 	}
 
 	int i = 1;
-	double time_read, time_coo_to_csr, time_convert_to_format, time_compute;
+	double time_read, time_coo_to_csr, time_csr_format, time_convert_to_format, time_compute;
 	
 	struct Matrix_Market * MTX = NULL;
+	struct DLMC_Matrix * SMTX;
 	ValueType * coo_val = NULL;   // MATRIX_MARKET_FLOAT_T is always double, as reference for error calculation.
 	INT_T * coo_rowind = NULL;
 	INT_T * coo_colind = NULL;
@@ -123,48 +125,96 @@ int main(int argc, char **argv)
 	snprintf(matrix_name, sizeof(matrix_name), "%s", file_in);
 
 	int k = atoi(argv[i++]);
+	char *dataset = getenv("DATASET");
 
-	time_read = time_it(1,
-		long expand_symmetry = 1;
-		long pattern_dummy_vals = 1;
-		MTX = mtx_read(file_in, expand_symmetry, pattern_dummy_vals);
-		coo_rowind = MTX->R;
-		coo_colind = MTX->C;
-		coo_m = MTX->m;
-		coo_n = MTX->n;
-		coo_nnz = MTX->nnz;
-		mtx_values_convert_to_real(MTX);
-		coo_val = (typeof(coo_val)) MTX->V;
-		MTX->R = NULL;
-		MTX->C = NULL;
-		MTX->V = NULL;
-		mtx_destroy(&MTX);
-	);
-	// printf("time read: %lf\n", time_read);
+	if (strcmp(dataset, "MATRIX_MARKET") == 0) {
+		time_read = time_it(1,
+			long expand_symmetry = 1;
+			long pattern_dummy_vals = 1;
+			MTX = mtx_read(file_in, expand_symmetry, pattern_dummy_vals);
+			coo_rowind = MTX->R;
+			coo_colind = MTX->C;
+			coo_m = MTX->m;
+			coo_n = MTX->n;
+			coo_nnz = MTX->nnz;
+			mtx_values_convert_to_real(MTX);
+			coo_val = (typeof(coo_val)) MTX->V;
+			MTX->R = NULL;
+			MTX->C = NULL;
+			MTX->V = NULL;
+			mtx_destroy(&MTX);
+		);
+		// printf("time read: %lf\n", time_read);
 
-	time_coo_to_csr = time_it(1,
-		csr_a = (typeof(csr_a)) aligned_alloc(64, coo_nnz * sizeof(*csr_a));
-		csr_ja = (typeof(csr_ja)) aligned_alloc(64, coo_nnz * sizeof(*csr_ja));
-		csr_ia = (typeof(csr_ia)) aligned_alloc(64, (coo_m+1) * sizeof(*csr_ia));
-		csr_m = coo_m;
-		csr_n = coo_n;
-		csr_nnz = coo_nnz;
-		_Pragma("omp parallel for")
-		for (long i=0;i<coo_nnz;i++)
-		{
-			csr_a[i] = 0.0;
-			csr_ja[i] = 0;
-		}
-		_Pragma("omp parallel for")
-		for (long i=0;i<coo_m+1;i++)
-			csr_ia[i] = 0;
-		coo_to_csr(coo_rowind, coo_colind, coo_val, coo_m, coo_n, coo_nnz, csr_ia, csr_ja, csr_a, 1, 0);
+		time_coo_to_csr = time_it(1,
+			csr_a = (typeof(csr_a)) aligned_alloc(64, coo_nnz * sizeof(*csr_a));
+			csr_ja = (typeof(csr_ja)) aligned_alloc(64, coo_nnz * sizeof(*csr_ja));
+			csr_ia = (typeof(csr_ia)) aligned_alloc(64, (coo_m+1) * sizeof(*csr_ia));
+			csr_m = coo_m;
+			csr_n = coo_n;
+			csr_nnz = coo_nnz;
+			_Pragma("omp parallel for")
+			for (long i=0;i<coo_nnz;i++)
+			{
+				csr_a[i] = 0.0;
+				csr_ja[i] = 0;
+			}
+			_Pragma("omp parallel for")
+			for (long i=0;i<coo_m+1;i++)
+				csr_ia[i] = 0;
+			coo_to_csr(coo_rowind, coo_colind, coo_val, coo_m, coo_n, coo_nnz, csr_ia, csr_ja, csr_a, 1, 0);
 
-		free(coo_rowind);
-		free(coo_colind);
-		free(coo_val);
-	);
+			free(coo_rowind);
+			free(coo_colind);
+			free(coo_val);
+		);
 	// printf("time coo to csr: %lf\n", time_coo_to_csr);
+	} else if (strcmp(dataset, "DLMC") == 0) {
+		time_read = time_it(1,
+			long expand_symmetry = 1;
+			long pattern_dummy_vals = 1;
+			SMTX = smtx_read(file_in, expand_symmetry, pattern_dummy_vals);
+			coo_rowind = SMTX->R;
+			coo_colind = SMTX->C;
+			coo_m = SMTX->m;
+			coo_n = SMTX->k;
+			coo_nnz = SMTX->nnz;
+			coo_val = (typeof(coo_val)) SMTX->V;
+			SMTX->R = NULL;
+			SMTX->C = NULL;
+			SMTX->V = NULL;
+			smtx_destroy(&SMTX);
+		);
+
+		time_csr_format = time_it(1,
+			csr_a = (typeof(csr_a)) aligned_alloc(64, coo_nnz * sizeof(*csr_a));
+			csr_ja = (typeof(csr_ja)) aligned_alloc(64, coo_nnz * sizeof(*csr_ja));
+			csr_ia = (typeof(csr_ia)) aligned_alloc(64, (coo_m+1) * sizeof(*csr_ia));
+			csr_m = coo_m;
+			csr_n = coo_n;
+			csr_nnz = coo_nnz;
+			printf("coo_nnz: %ld, coo_m: %ld, coo_n: %ld\n");
+			_Pragma("omp parallel for")
+			for (long i=0;i<coo_nnz;i++)
+			{
+				csr_a[i] = (ValueType) coo_val[i];
+				csr_ja[i] = (long int) coo_colind[i];
+			}
+			_Pragma("omp parallel for")
+			for (long i=0;i<coo_m+1;i++){
+				csr_ia[i] = coo_rowind[i];
+			}
+
+			free(coo_rowind);
+			free(coo_colind);
+			free(coo_val);
+		);
+		printf("time memory aligning: %lf\n", time_csr_format);
+
+	} else {
+		printf("Error: dataset not set\n");
+		return 1;
+	}
 
 	_Pragma("omp parallel for")
 	for (long i=0;i<coo_nnz;i++)

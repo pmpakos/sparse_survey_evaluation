@@ -280,9 +280,9 @@ subkernel_csr_vec_xrow_blocked(CSRArrays * restrict csr, ValueType * restrict x,
         for (i = i_s; i < i_e; i++) {
             j_s = csr->ia[i];
             j_e = csr->ia[i+1];
-			// for (long c = kb; c < k_end; c++) {
-			// 	y[i * k + c] = 0;
-			// }
+			for (long c = kb; c < k_end; c++) {
+				y[i * k + c] = 0;
+			}
 
             for (j = j_s; j < j_e; j++) {
                 subkernel_row_csr_vec_xrow_blocked(csr, x, y, i, j, kb, k_end);

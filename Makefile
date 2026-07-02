@@ -15,6 +15,7 @@ EXE  =
 
 # CPU
 EXE += spmm_mkl.exe
+EXE += spmm_mkl_colind0.exe
 EXE += spmmm_mkl_coo.exe
 EXE += spmm_csr_naive.exe
 EXE += spmm_csr.exe
@@ -33,7 +34,18 @@ EXE += spmm_csr_vector_xrow_blocked_l1_j_stream.exe
 EXE += spmm_coo_vector_xrow_perfect_nnz_balance.exe
 EXE += spmm_coo_vector_xrow_row_split.exe
 EXE += spmm_coo_vector_xrow_atomic.exe
-
+EXE += spmm_coo_vector_xrow_colind0.exe
+EXE += spmm_coo_vector_z_order.exe
+EXE += spmm_coo_vector_z_order_prefetch.exe
+EXE += spmm_coo_vector_z_order_new.exe
+EXE += spmm_coo_vector_hilbert.exe
+EXE += spmm_coo_vector_cross.exe
+EXE += spmm_coo_vector_frontier.exe
+EXE += spmm_coo_vector_frontier_ringbuffer.exe
+EXE += spmm_coo_vector_frontier_ringbuffer_all_seed.exe
+EXE += spmm_coo_vector_frontier_ringbuffer_roulette.exe
+EXE += spmm_coo_vector_rcm.exe
+EXE += gemm_mkl.exe
 # EXE += spmm_csr_naive_column.exe
 EXE += spmm_csr_column.exe
 EXE += spmm_csr_kahan_column.exe
@@ -205,6 +217,7 @@ ifeq ($(MODE), laptop)
 	MKL_PATH = /home/pmpakos/sparse_survey_evaluation/deps/epyc5_libs/cslab_mkl
 else
 	MKL_PATH = /various/common_tools/intel_parallel_studio/compilers_and_libraries/linux/mkl
+# 	MKL_PATH=/various/pmpakos/intel/oneapi/mkl/2024.1/
 endif
 
 # AOCL_PATH = /various/pmpakos/spmv_paper/aocl-sparse/build/release/
@@ -236,9 +249,9 @@ LDFLAGS_AOCL5 += -L'$(AOCL_PATH)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -
 #########################
 
 
-DOUBLE := 0
+# DOUBLE := 0
 # double-precision is not supported for most formats! so no point in running experiments with DOUBLE=1...
-# DOUBLE := 1
+DOUBLE := 1
 
 CFLAGS += -D'INT_T=int32_t'
 
@@ -341,6 +354,9 @@ sddmm_sputnik.exe: obj/sddmm_bench.o kernel_sputnik.cu $(LIB_OBJ)
 spmm_mkl.exe: obj/spmm_bench.o kernel_mkl.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
 
+spmm_mkl_colind0.exe: obj/spmm_bench.o kernel_mkl.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) -D'MKL_IE_COLIND0' $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
+
 spmmm_mkl_coo.exe: obj/spmm_bench.o kernel_mkl_coo.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
 
@@ -386,8 +402,8 @@ spmm_csr_vector_xrow_prefetch.exe: obj/spmm_bench.o kernel_csr_vec.cpp $(LIB_OBJ
 spmm_csr_vector_perfect_nnz_balance.exe: obj/spmm_bench.o kernel_csr_vec.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_VECTOR_PERFECT_NNZ_BALANCE' $^ -o $@ $(LDFLAGS)
 
-spmm_coo_vector.exe: obj/spmm_bench.o kernel_coo_vec.cpp $(LIB_OBJ)
-	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC' $^ -o $@ $(LDFLAGS)	
+spmm_coo_vector_xrow_colind0.exe: obj/spmm_bench.o kernel_coo_vec.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_XROW_ROW_SPLIT' -D'CUSTOM_COO_VEC_XROW_COLIND0' $^ -o $@ $(LDFLAGS)	
 
 spmm_coo_vector_xrow_atomic.exe: obj/spmm_bench.o kernel_coo_vec.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_XROW_ATOMIC' $^ -o $@ $(LDFLAGS)
@@ -397,6 +413,39 @@ spmm_coo_vector_xrow_row_split.exe: obj/spmm_bench.o kernel_coo_vec.cpp $(LIB_OB
 
 spmm_coo_vector_xrow_perfect_nnz_balance.exe: obj/spmm_bench.o kernel_coo_vec.cpp $(LIB_OBJ)
 	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_XROW_PERFECT_NNZ_BALANCE' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_z_order.exe: obj/spmm_bench.o kernel_coo_z_order.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_Z_ORDER' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_z_order_prefetch.exe: obj/spmm_bench.o kernel_coo_z_order.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_Z_ORDER_PREFETCH' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_z_order_new.exe: obj/spmm_bench.o kernel_coo_z_order_new.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_Z_ORDER_NEW' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_hilbert.exe: obj/spmm_bench.o kernel_coo_hilbert.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_HILBERT' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_cross.exe: obj/spmm_bench.o kernel_coo_vec_cross.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_CROSS' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_frontier.exe: obj/spmm_bench.o kernel_coo_vec_frontier.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_FRONTIER' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_frontier_ringbuffer.exe: obj/spmm_bench.o kernel_coo_vec_ring_buffer.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_FRONTIER_RINGBUFFER' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_frontier_ringbuffer_all_seed.exe: obj/spmm_bench.o kernel_coo_vec_ring_buffer_all_seed.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_FRONTIER_RINGBUFFER_ALL_SEED' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_frontier_ringbuffer_roulette.exe: obj/spmm_bench.o kernel_coo_vec_ring_buffer_roulette.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_FRONTIER_RINGBUFFER_ROULETTE' $^ -o $@ $(LDFLAGS)
+
+spmm_coo_vector_rcm.exe: obj/spmm_bench.o kernel_coo_rcm.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) -D'SPMM_KERNEL' -D'CUSTOM_COO_VEC_RCM' $^ -o $@ $(LDFLAGS)
+
+gemm_mkl.exe: gemm_mkl.cpp $(LIB_OBJ)
+	$(CPP) $(CFLAGS) $(CPPFLAGS_MKL) $^ -o $@ $(LDFLAGS) $(LDFLAGS_MKL)
 ############################################################################################
 
 spmm_csr_column.exe: obj/spmm_bench.o kernel_csr_column.cpp $(LIB_OBJ)

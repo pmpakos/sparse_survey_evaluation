@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 	int k = atoi(argv[i++]);
 	char *dataset = getenv("DATASET");
 
-	if (strcmp(dataset, "MATRIX_MARKET") == 0) {
+	if (strcmp(dataset, "MATRIX_MARKET") == 0 || strcmp(dataset, "GRAPH") == 0 || strcmp(dataset, "MASKS") == 0) {
 		time_read = time_it(1,
 			long expand_symmetry = 1;
 			long pattern_dummy_vals = 1;

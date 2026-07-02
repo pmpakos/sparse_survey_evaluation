@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 			free(mtx_colind);
 			free(mtx_val);
 		);
-	} else if (strcmp(dataset, "DLMC") == 0) {
+	} else if (strcmp(dataset, "DLMC") == 0 || strcmp(dataset, "GRAPH") == 0 || strcmp(dataset, "MASKS") == 0) {
 		printf("Reading DLMC matrix...\n");
 		time_read = time_it(1,
 			long expand_symmetry = 1;
@@ -157,9 +157,9 @@ int main(int argc, char **argv)
 
 	time = time_it(1,
 		csr_plot_f(file_fig, row_ptr, col_idx, val, m, n, nnz, 0, num_pixels_x, num_pixels_y);
-		csr_row_size_histogram_plot(file_fig, row_ptr, col_idx, val, m, n, nnz, 1, 1024, 1024);
-		csr_num_neigh_histogram_plot(file_fig, row_ptr, col_idx, val, m, n, nnz, 1, 1, num_pixels_x, num_pixels_y);
-		csr_cross_row_similarity_histogram_plot(file_fig, row_ptr, col_idx, val, m, n, nnz, 1, 1, num_pixels_x, num_pixels_y);
+		// csr_row_size_histogram_plot(file_fig, row_ptr, col_idx, val, m, n, nnz, 1, 1024, 1024);
+		// csr_num_neigh_histogram_plot(file_fig, row_ptr, col_idx, val, m, n, nnz, 1, 1, num_pixels_x, num_pixels_y);
+		// csr_cross_row_similarity_histogram_plot(file_fig, row_ptr, col_idx, val, m, n, nnz, 1, 1, num_pixels_x, num_pixels_y);
 	);
 	printf("time plot = %lf\n", time);
 

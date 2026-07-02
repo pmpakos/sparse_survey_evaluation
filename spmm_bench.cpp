@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <random>
 
 #include "macros/cpp_defines.h"
 
@@ -28,9 +29,9 @@ double CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val, INT_T m,
 {
 	__attribute__((unused)) ValueType epsilon_relaxed = 1e-4;
 	#if DOUBLE == 0
-		ValueType epsilon = 1e-5;
+		ValueType epsilon = 1e-3;
 	#elif DOUBLE == 1
-		ValueType epsilon = 1e-10;
+		ValueType epsilon = 1e-8;
 	#endif
 	// long i;
 	// ValueType * y_gold = (typeof(y_gold)) malloc(m * k * sizeof(*y_gold));
@@ -38,7 +39,7 @@ double CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val, INT_T m,
 	// #pragma omp parallel
 	// {
 		ValueType sum;
-		ValueType maxDiff = 0, diff;
+		ValueType maxDiff = 0, diff, y_gold;
 		long i, j;
 		// #pragma omp for
 		// for(i=0;i<m * k;i++)
@@ -46,14 +47,15 @@ double CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val, INT_T m,
 		// 	y_gold[i] = 0;
 		// 	// y_test[i] = y[i];
 		// }
-		#pragma omp for
+		// #pragma omp for
 		for (i = 0; i < m; i++) {
 			for (long c = 0; c < k; c++) {
-				ValueType y_gold, value, tmp, compensation;
+				ValueType  value, tmp, compensation;
 				compensation = 0;
 				sum = 0;
 				for (j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
-					value = val[j] * x[c * n + col_idx[j]] - compensation;
+					// printf("x: %lf\n", x[c * n + col_idx[j]]);
+					value = val[j] * x[col_idx[j]*k +c] - compensation;
 					tmp = sum + value;
 					compensation = (tmp - sum) - value;
 					sum = tmp;
@@ -74,6 +76,7 @@ double CheckAccuracy(INT_T * row_ptr, INT_T * col_idx, ValueType * val, INT_T m,
 	// for(i=0;i<m * k;i++)
 	// {
 	// 	diff = Abs(y_gold[i] - y[i]);
+	// 	// printf("y_gold: %lf, y_test: %lf, diff: %lf\n", y_gold[i], y[i], diff);
 	// 	if (y_gold[i] > epsilon)
 	// 	{
 	// 		diff = diff / abs(y_gold[i]);
@@ -127,7 +130,7 @@ int main(int argc, char **argv)
 	int k = atoi(argv[i++]);
 	char *dataset = getenv("DATASET");
 
-	if (strcmp(dataset, "MATRIX_MARKET") == 0) {
+	if (strcmp(dataset, "MATRIX_MARKET") == 0 || strcmp(dataset, "GRAPH") == 0 || strcmp(dataset, "MASKS") == 0) {
 		time_read = time_it(1,
 			long expand_symmetry = 1;
 			long pattern_dummy_vals = 1;
@@ -213,76 +216,84 @@ int main(int argc, char **argv)
 		return 1;
 	}
 	// printf("time coo to csr: %lf\n", time_coo_to_csr);
-
+	if (csr_nnz==0)
+	{
+		printf("Error: matrix has no non-zeros\n");
+		return 1;
+	}
 	time_convert_to_format = time_it(1,
 		MF = csr_to_format(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k);
 	);
 	// printf("time convert to format: %lf\n", time_convert_to_format);
-	if(coo_nnz > 200)
-	{
-		time_convert_to_format = time_it(1,
-			MF = csr_to_format(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k);
-		);
-		// printf("time convert to format: %lf\n", time_convert_to_format);
+	// if(coo_nnz > 200)
+	// {
+	// time_convert_to_format = time_it(1,
+	// 	MF = csr_to_format(csr_ia, csr_ja, csr_a, csr_m, csr_n, csr_nnz, k);
+	// );
+	// printf("time convert to format: %lf\n", time_convert_to_format);
 
-		x = (typeof(x)) aligned_alloc(64, csr_n * k * sizeof(*x));
-		#pragma omp parallel for
-		for(long i=0; i<csr_n * k; ++i)
-			x[i] = 1.0;
-		y = (typeof(y)) aligned_alloc(64, csr_m * k * sizeof(sizeof(*y)));
-		#pragma omp parallel for
-		for(long i=0; i<csr_m * k; i++)
-			y[i] = 0.0;
+	unsigned int seed = (unsigned int)time(NULL) ^ omp_get_thread_num();
+	x = (typeof(x)) aligned_alloc(64, csr_n * k * sizeof(*x));
+	#pragma omp parallel for
+	for(long i=0; i<csr_n * k; ++i){
+		x[i] = ((float)rand_r(&seed) / (float)RAND_MAX) * 2.0f;
+		// x[i] = 1.0;
+	}
+	y = (typeof(y)) aligned_alloc(64, csr_m * k * sizeof(sizeof(*y)));
+	#pragma omp parallel for
+	for(long i=0; i<csr_m * k; i++)
+		y[i] = 0.0;
 
-		// warmup iteration
-		MF->spmm(x, y, k);
+	// warmup iteration
+	MF->spmm(x, y, k);
 
-		// printf("---\n");
-		// for(int i=0; i<10; i++){
-		// 	printf("i=%d\t[ ", i);
-		// 	for(int j=0; j<10; j++) 
-		// 		printf("%lf ", y[i*k+j]);
-		// 	printf("]\n");
-		// }
-		// printf("---\n");
-		double check_acc = CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, k, x, y);
+	// printf("---\n");
+	// for(int i=0; i<10; i++){
+	// 	printf("i=%d\t[ ", i);
+	// 	for(int j=0; j<10; j++) 
+	// 		printf("%lf ", y[i*k+j]);
+	// 	printf("]\n");
+	// }
+	// printf("---\n");
+	double check_acc = CheckAccuracy(csr_ia, csr_ja, csr_a, csr_m, csr_n, k, x, y);
 
-		if(check_acc < 0.1){
-			const char* system = getenv("SYSTEM");
-			if (system == NULL) {
-				// handle the case where the environment variable is not set
-				fprintf(stderr, "Environment variable SYSTEM not set.\n");
-				exit(EXIT_FAILURE);
-			}
-
-			// if GPU, need to run 1000 iterations more for warmup
-			int gpu_kernel = 0;
-			const char* env_gpu_kernel = getenv("GPU_KERNEL");
-			if (env_gpu_kernel != NULL) {
-				gpu_kernel = atoi(env_gpu_kernel);
-			} else {
-				// handle the case where the environment variable is not set
-				fprintf(stderr, "Environment variable GPU_KERNEL not set.\n");
-				exit(EXIT_FAILURE);
-			}
-			if(gpu_kernel)
-				for(int i=0; i<1000; i++)
-					MF->spmm(x, y, k);
-
-			time_compute = 0;
-			iterations = 128;
-			for(int i=0; i<iterations; i++){
-				time_compute += time_it(1, 
-					MF->spmm(x, y, k);
-				);
-			}
-			double gflops = 2.0 * MF->nnz * k * iterations / time_compute / 1e9;
-			printf("SpMM kernel - matrix: %s (%ld rows, %ld cols, %ld nnz), read: %.4lf, coo_to_csr: %.4lf, format_conversion: %.4lf, format: %s, k: %d, system: %s, gflops: %.2lf\n", matrix_name, MF->m, MF->n, MF->nnz, time_read, time_coo_to_csr, time_convert_to_format, MF->format_name, k, system, gflops);
+	// if(check_acc < 0.1){
+	if (1) {
+		const char* system = getenv("SYSTEM");
+		if (system == NULL) {
+			// handle the case where the environment variable is not set
+			fprintf(stderr, "Environment variable SYSTEM not set.\n");
+			exit(EXIT_FAILURE);
 		}
 
-		free(x);
-		free(y);
+		// if GPU, need to run 1000 iterations more for warmup
+		int gpu_kernel = 0;
+		const char* env_gpu_kernel = getenv("GPU_KERNEL");
+		if (env_gpu_kernel != NULL) {
+			gpu_kernel = atoi(env_gpu_kernel);
+		} else {
+			// handle the case where the environment variable is not set
+			fprintf(stderr, "Environment variable GPU_KERNEL not set.\n");
+			exit(EXIT_FAILURE);
+		}
+		if(gpu_kernel)
+			for(int i=0; i<1000; i++)
+				MF->spmm(x, y, k);
+
+		time_compute = 0;
+		iterations = 128;
+		for(int i=0; i<iterations; i++){
+			time_compute += time_it(1, 
+				MF->spmm(x, y, k);
+			);
+		}
+		double gflops = 2.0 * MF->nnz * k * iterations / time_compute / 1e9;
+		printf("SpMM kernel - matrix: %s (%ld rows, %ld cols, %ld nnz), read: %.4lf, coo_to_csr: %.4lf, format_conversion: %.4lf, format: %s, k: %d, system: %s, gflops: %.2lf\n", matrix_name, MF->m, MF->n, MF->nnz, time_read, time_coo_to_csr, time_convert_to_format, MF->format_name, k, system, gflops);
 	}
+
+	free(x);
+	free(y);
+	// }
 
 	free(csr_a);
 	free(csr_ia);

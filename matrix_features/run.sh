@@ -41,10 +41,11 @@ matrices_validation=(
 )
 
 dlmc_matrices_files=(
-    "$path_dlmc/transformer_matrices.txt"
-    # "$path_dlmc/transformer_matrices_small.txt"
+    # "$path_dlmc/transformer_matrices.txt"
+    "$path_dlmc/transformer_matrices_small.txt"
 
 )
+echo "Running on dataset: $dlmc_matrices_files"
 if [ "$DATASET" = "MATRIX_MARKET" ]; then
     path="$path_validation"
     matrices=(
@@ -57,9 +58,9 @@ elif [ "$DATASET" = "DLMC" ]; then
     for f in "${dlmc_matrices_files[@]}"; do
         mapfile -t dlmc_matrices < "$f"
         for a in "${dlmc_matrices[@]}"; do
-            if [[ "$a" != *"0.5"* ]]; then
+            # if [[ "$a" != *"0.5"* ]]; then
             matrices+=("$a")
-            fi
+            # fi
         done
     done
 else
@@ -71,6 +72,6 @@ fi
 for a in "${matrices[@]}"
 do
     echo '--------'
-    echo ${path_validation}/$a
-    ./mat_feat.exe ${path_validation}/$a
+    echo ${path}/$a
+    ./mat_feat.exe ${path}/$a
 done

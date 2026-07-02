@@ -38,7 +38,14 @@ struct CSRArrays : Matrix_Format
 		const sparse_index_base_t indexing = SPARSE_INDEX_BASE_ZERO;
 		const sparse_memory_usage_t policy = SPARSE_MEMORY_NONE;
 		const int expected_calls = 128;
-
+		#ifdef MKL_IE_COLIND0
+			#pragma omp parallel for schedule(dynamic, 1024)
+				for (long i = 0; i < m; i++) {
+					for (long j = ia[i]; j < ia[i+1]; j++) {
+						ja[j] = ja[0];
+					}
+				}
+		#endif
 		descr.type = SPARSE_MATRIX_TYPE_GENERAL;
 		mkl_verbose(1);
 		#if DOUBLE == 0
@@ -89,7 +96,11 @@ csr_to_format(INT_T * row_ptr, INT_T * col_ind, ValueType * values, long m, long
 {
 	struct CSRArrays * csr = new CSRArrays(row_ptr, col_ind, values, m, n, nnz, k);
 	csr->mem_footprint = nnz * (sizeof(ValueType) + sizeof(INT_T)) + (m+1) * sizeof(INT_T);
-	csr->format_name = (char *) "MKL_IE";
+	#ifdef MKL_IE_COLIND0
+		csr->format_name = (char *) "MKL_IE_COLIND0";
+	#else
+		csr->format_name = (char *) "MKL_IE";
+	#endif
 	return csr;
 }
 
@@ -105,6 +116,9 @@ compute_spmm(CSRArrays * restrict csr, ValueType * restrict x, ValueType * restr
 	if (csr->x == NULL)
 	{
 		csr->x = x;
+		// for (long i = 0; i < 100; i++) {
+		// 	printf("x[%ld]: %lf\n", i, x[i]);
+		// }
 	}
 
 	#if DOUBLE == 0

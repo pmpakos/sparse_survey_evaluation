@@ -249,9 +249,9 @@ LDFLAGS_AOCL5 += -L'$(AOCL_PATH)/lib/' -Wl,--no-as-needed  -laoclsparse -lgomp -
 #########################
 
 
-# DOUBLE := 0
+DOUBLE := 0
 # double-precision is not supported for most formats! so no point in running experiments with DOUBLE=1...
-DOUBLE := 1
+# DOUBLE := 1
 
 CFLAGS += -D'INT_T=int32_t'
 

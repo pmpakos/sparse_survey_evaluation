@@ -180,9 +180,7 @@ void COOArrays::preprocess_frontier(int r_first_rows, int cross_distance_limit, 
 
         // if (local_nnz <= 0) return;
 
-        // ---------------------------------------------------------
         // 1. Build local adjacency lists and degree counters
-        // ---------------------------------------------------------
         std::unordered_map<long, std::vector<long>> row_nnzs_set;
         std::unordered_map<long, std::vector<long>> col_nnzs_set;
         std::unordered_map<long, int> row_count;
@@ -213,9 +211,7 @@ void COOArrays::preprocess_frontier(int r_first_rows, int cross_distance_limit, 
             seeds.push_back(row_count_vector[i].first);
         }
 
-        // ---------------------------------------------------------
         // 3. Setup Heuristic State Tracking (The Dictionaries)
-        // ---------------------------------------------------------
         std::vector<bool> visited(local_nnz, false);
         std::vector<bool> in_frontier(local_nnz, false); // Prevents duplicate entries
         
@@ -596,6 +592,11 @@ compute_coo_vector_xrow(COOArrays * restrict coo, ValueType * restrict x, ValueT
                 if (coo->row_ind[j] < start_row) start_row = coo->row_ind[j];
                 if (coo->row_ind[j] > end_row) end_row = coo->row_ind[j];
             }
+        }
+        else {
+            // No nnz assigned to this thread; make the zero-init loop below a no-op.
+            start_row = 0;
+            end_row = -1;
         }
         
         for (long i=start_row;i<=end_row;i++)

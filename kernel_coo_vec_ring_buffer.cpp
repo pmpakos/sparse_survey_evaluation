@@ -633,6 +633,11 @@ compute_coo_vector_xrow(COOArrays * restrict coo, ValueType * restrict x, ValueT
                 if (coo->row_ind[j] > end_row) end_row = coo->row_ind[j];
             }
         }
+        else {
+            // No nnz assigned to this thread; make the zero-init loop below a no-op.
+            start_row = 0;
+            end_row = -1;
+        }
         
         for (long i=start_row;i<=end_row;i++)
 	    {	
